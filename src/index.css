@@ -1,0 +1,69 @@
+@import "tailwindcss";
+
+@layer utilities {
+  .brushed-metal {
+    background: linear-gradient(to bottom, #E8E8E8 0%, #D1D1D1 100%);
+    border-bottom: 1px solid #999;
+  }
+  .dark .brushed-metal {
+    background: linear-gradient(to bottom, #3A3A3C 0%, #2C2C2E 100%);
+    border-bottom: 1px solid #1C1C1E;
+  }
+  
+  .sidebar-bg {
+    background-color: rgba(236, 236, 236, 0.85);
+    backdrop-filter: blur(20px);
+    border-right: 1px solid #B4B4B4;
+  }
+  .dark .sidebar-bg {
+    background-color: rgba(38, 38, 38, 0.85);
+    backdrop-filter: blur(20px);
+    border-right: 1px solid #444444;
+  }
+
+  .btn-macos {
+    background: linear-gradient(to bottom, #FFFFFF 0%, #F0F0F0 100%);
+    border: 1px solid #B6B6B6;
+    box-shadow: 0 1px 0 rgba(255,255,255,0.7);
+    border-radius: 4px;
+  }
+  .btn-macos:active {
+    background: #DCDCDC;
+  }
+  .dark .btn-macos {
+    background: linear-gradient(to bottom, #4A4A4C 0%, #323234 100%);
+    border: 1px solid #5A5A5C;
+    box-shadow: 0 1px 0 rgba(255,255,255,0.1);
+    color: #F0F0F0;
+  }
+
+  .traffic-light-red {
+    background: #FF5F57;
+    border: 0.5px solid #E2443E;
+  }
+  .traffic-light-yellow {
+    background: #FFBD2E;
+    border: 0.5px solid #D9A422;
+  }
+  .traffic-light-green {
+    background: #28C940;
+    border: 0.5px solid #20A132;
+  }
+
+  .graph-panel {
+    background: #1A1A1A;
+    border: 1px solid #333;
+  }
+
+  .input-inset {
+    border: 1px solid #B4B4B4;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+    background: #FFF;
+  }
+  .dark .input-inset {
+    border: 1px solid #5A5A5C;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.5);
+    background: #262626;
+  }
+}
+
