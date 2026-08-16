@@ -27,6 +27,7 @@ import { AboutMacModal } from './components/AboutMacModal';
 import { SystemPreferencesModal } from './components/SystemPreferencesModal';
 import { InspectorDrawer } from './components/InspectorDrawer';
 import { TerminalShellDrawer } from './components/TerminalShellDrawer';
+import { InstallerModal } from './components/InstallerModal';
 
 export default function App() {
   // Application State with APFS Storage Local Persistence
@@ -69,6 +70,7 @@ export default function App() {
   const [showSysPrefs, setShowSysPrefs] = useState(false);
   const [showActivityMonitor, setShowActivityMonitor] = useState(false);
   const [showPersonaStudio, setShowPersonaStudio] = useState(false);
+  const [showInstaller, setShowInstaller] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
 
@@ -336,6 +338,7 @@ export default function App() {
         onTriggerSiri={() => {
           handleSendMessage('Hello Siri AI! Provide a quick status check of macOS High Sierra AI Studio.');
         }}
+        onOpenInstaller={() => setShowInstaller(true)}
       />
 
       {/* Main High Sierra Desktop Window */}
@@ -494,6 +497,13 @@ export default function App() {
             }
           }}
           onClose={() => setShowPersonaStudio(false)}
+        />
+      )}
+
+      {showInstaller && (
+        <InstallerModal
+          onClose={() => setShowInstaller(false)}
+          soundEnabled={preferences.soundEffects}
         />
       )}
     </div>

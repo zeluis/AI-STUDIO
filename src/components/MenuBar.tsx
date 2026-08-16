@@ -22,6 +22,7 @@ interface MenuBarProps {
   onToggleTerminal: () => void;
   onToggleSound: () => void;
   onTriggerSiri: () => void;
+  onOpenInstaller: () => void;
 }
 
 export const MenuBar: React.FC<MenuBarProps> = ({
@@ -43,6 +44,7 @@ export const MenuBar: React.FC<MenuBarProps> = ({
   onToggleTerminal,
   onToggleSound,
   onTriggerSiri,
+  onOpenInstaller,
 }) => {
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [timeString, setTimeString] = useState<string>('');
@@ -114,6 +116,16 @@ export const MenuBar: React.FC<MenuBarProps> = ({
               >
                 <span>About HighSierra AI Studio...</span>
                 <span className="text-[10px] opacity-60">10.13.6</span>
+              </button>
+              <button
+                onClick={() => {
+                  onOpenInstaller();
+                  setActiveDropdown(null);
+                }}
+                className="w-full text-left px-4 py-1.5 hover:bg-blue-600 hover:text-white flex items-center justify-between text-blue-600 dark:text-blue-400 font-semibold"
+              >
+                <span>Install as Native App...</span>
+                <span className="text-[10px] bg-blue-100 dark:bg-blue-900 px-1 rounded-sm">.pkg</span>
               </button>
               <div className="my-1 border-t border-gray-200 dark:border-neutral-700" />
               <button

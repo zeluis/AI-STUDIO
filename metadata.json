@@ -1,5 +1,5 @@
 {
-  "name": "HighSierra AI Studio",
+  "name": "fpi HighSierra AI Studio",
   "description": "Modern macOS 10.13 High Sierra desktop AI client featuring dual Gemini cloud & local Ollama/LM Studio model hub, telemetry monitor, persona studio, and APFS local storage.",
   "requestFramePermissions": ["microphone"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
