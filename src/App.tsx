@@ -32,6 +32,7 @@ import { SystemPreferencesModal } from './components/SystemPreferencesModal';
 import { InspectorDrawer } from './components/InspectorDrawer';
 import { TerminalShellDrawer } from './components/TerminalShellDrawer';
 import { InstallerModal } from './components/InstallerModal';
+import { SiriFloatingOverlay } from './components/SiriFloatingOverlay';
 import { MaterialIcon } from './components/MaterialIcon';
 
 export default function App() {
@@ -124,8 +125,47 @@ export default function App() {
   const [showActivityMonitor, setShowActivityMonitor] = useState(false);
   const [showPersonaStudio, setShowPersonaStudio] = useState(false);
   const [showInstaller, setShowInstaller] = useState(false);
+  const [showSiriOverlay, setShowSiriOverlay] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+
+  // Keyboard shortcut for Siri (⌥Space / Option+Space) and Escape
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.altKey && e.code === 'Space') {
+        e.preventDefault();
+        setShowSiriOverlay((prev) => {
+          const next = !prev;
+          if (next) playChime('siri', preferences.soundEffects);
+          return next;
+        });
+      } else if (e.key === 'Escape' && showSiriOverlay) {
+        setShowSiriOverlay(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showSiriOverlay, preferences.soundEffects]);
+
+  // Insert Siri insight into active chat workspace
+  const handleInsertSiriToChat = (prompt: string, response: string) => {
+    const userMsg: ChatMessage = {
+      id: `msg_siri_u_${Date.now()}`,
+      role: 'user',
+      content: `🎙️ **Siri Query**: ${prompt}`,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      model: selectedModel.name,
+    };
+    const asstMsg: ChatMessage = {
+      id: `msg_siri_a_${Date.now() + 1}`,
+      role: 'assistant',
+      content: response,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      model: `${selectedModel.name} (via Siri)`,
+    };
+    updateActiveSessionMessages((prev) => [...prev, userMsg, asstMsg]);
+    playChime('receive', preferences.soundEffects);
+  };
 
   // Desktop Context Menu State
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
@@ -632,7 +672,11 @@ export default function App() {
           });
         }}
         onTriggerSiri={() => {
-          handleSendMessage('Hello Siri AI! Provide a quick system and telemetry check of macOS High Sierra AI Studio.');
+          setShowSiriOverlay((prev) => {
+            const next = !prev;
+            if (next) playChime('siri', preferences.soundEffects);
+            return next;
+          });
         }}
         onOpenInstaller={() => setShowInstaller(true)}
       />
@@ -927,6 +971,21 @@ export default function App() {
           soundEnabled={preferences.soundEffects}
         />
       )}
+
+      {/* Floating Siri AI Overlay */}
+      <SiriFloatingOverlay
+        isOpen={showSiriOverlay}
+        onClose={() => setShowSiriOverlay(false)}
+        selectedModel={selectedModel}
+        selectedPersona={selectedPersona}
+        telemetry={telemetry}
+        preferences={preferences}
+        onUpdatePreferences={(updated) => setPreferences((p) => ({ ...p, ...updated }))}
+        onInsertToChat={handleInsertSiriToChat}
+        onSpeakText={speakText}
+        isSpeaking={isSpeaking}
+        onStopSpeaking={stopSpeaking}
+      />
     </div>
   );
 }

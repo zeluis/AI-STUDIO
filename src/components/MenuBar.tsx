@@ -593,118 +593,162 @@ export const MenuBar: React.FC<MenuBarProps> = ({
         </div>
       </nav>
 
-      {/* Right Telemetry, Quick Wallpaper Switcher & Status Gauges */}
-      <div className="flex items-center space-x-2 text-[11px] font-mono">
-        {/* Quick Wallpaper Switcher Button (Toolbar 1-click toggle) */}
-        <div className="relative">
-          <button
-            onClick={(e) => toggleDropdown(e, 'quick_wallpaper')}
-            className="flex items-center space-x-1 px-1.5 py-0.5 rounded-xs bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 hover:bg-black/10 dark:hover:bg-white/10 cursor-pointer font-sans"
-            title={`Active Wallpaper: ${activeWallpaperItem.name} (Click to switch)`}
-          >
-            <MaterialIcon name="wallpaper" size={12} className="text-sky-500" />
-            <span className="hidden lg:inline text-[10px] font-medium truncate max-w-[110px]">
-              {preferences.wallpaper === 'dynamic' ? `Dynamic: ${dynamicInfo.periodName.split(' ')[0]}` : activeWallpaperItem.tag || 'Wallpaper'}
-            </span>
-          </button>
-
-          {activeDropdown === 'quick_wallpaper' && (
-            <div className="absolute right-0 top-full mt-1 w-72 bg-white/95 dark:bg-neutral-850/95 text-gray-800 dark:text-gray-100 rounded-lg shadow-2xl border border-gray-300 dark:border-neutral-700 p-2 backdrop-blur-xl z-50 text-xs animate-fade-in">
-              <div className="flex justify-between items-center pb-1.5 border-b border-gray-200 dark:border-neutral-700 mb-1.5">
-                <span className="font-bold text-[11px]">Desktop Pictures</span>
-                <button onClick={onOpenSysPrefs} className="text-[10px] text-blue-600 hover:underline cursor-pointer">
-                  All Wallpapers...
-                </button>
-              </div>
-              <div className="grid grid-cols-2 gap-1.5">
-                {WALLPAPER_LIST.slice(0, 6).map((w) => {
-                  const isCurrent = preferences.wallpaper === w.id;
-                  return (
-                    <button
-                      key={w.id}
-                      onClick={() => handleSelectWallpaper(w.id)}
-                      className={`p-1 rounded-md border text-left flex flex-col items-start cursor-pointer transition-all ${
-                        isCurrent
-                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/40 font-bold text-blue-600'
-                          : 'border-gray-200 dark:border-neutral-700 hover:border-blue-400'
-                      }`}
-                    >
-                      <div className="w-full h-10 rounded-xs overflow-hidden mb-1 relative border border-black/10">
-                        {w.imageSrc ? (
-                          <img src={w.imageSrc} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                        ) : (
-                          <div className="w-full h-full" style={{ background: w.gradientFallback }} />
-                        )}
-                        {isCurrent && (
-                          <div className="absolute top-0.5 right-0.5 w-3.5 h-3.5 bg-blue-600 text-white rounded-full flex items-center justify-center">
-                            <MaterialIcon name="check" size={10} />
-                          </div>
-                        )}
-                      </div>
-                      <span className="text-[10px] truncate w-full">{w.name}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-        </div>
-
+      {/* Right Telemetry, Modern Pill Triggers (Wallpaper, Voice, Siri) & Status */}
+      <div className="flex items-center space-x-1.5 text-[11px] font-mono">
         {/* VRAM Live Usage Gauge */}
         <div
-          className="hidden sm:flex items-center space-x-1 px-1.5 py-0.5 rounded-xs bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 cursor-pointer"
+          className="hidden xl:flex items-center space-x-1 px-2 py-0.5 rounded-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 cursor-pointer hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
           onClick={onOpenActivityMonitor}
           title="Hardware VRAM Allocation (Metal 2 GPU)"
         >
           <MaterialIcon name="memory" size={12} className="text-blue-500" />
-          <span>{telemetry.vramUsedGB}GB VRAM</span>
+          <span className="text-[10px] font-medium">{telemetry.vramUsedGB}GB VRAM</span>
         </div>
 
         {/* Token Processing Speed */}
         <div
-          className="hidden md:flex items-center space-x-1 px-1.5 py-0.5 rounded-xs bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-emerald-600 dark:text-emerald-400 font-bold"
+          className="hidden 2xl:flex items-center space-x-1 px-2 py-0.5 rounded-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-emerald-600 dark:text-emerald-400 font-bold"
           title="Active Token Inference Speed"
         >
           <MaterialIcon name="speed" size={12} />
-          <span>{telemetry.tokensPerSec} tok/s</span>
+          <span className="text-[10px]">{telemetry.tokensPerSec} tok/s</span>
         </div>
 
-        {/* Global Speech Synthesis Voice Switch */}
+        {/* Modern CSS Pill Group: Wallpaper & Voice Triggers (Positioned Close Together) */}
+        <div className="flex items-center space-x-1 bg-black/5 dark:bg-white/5 p-0.5 rounded-full border border-black/10 dark:border-white/10 shadow-2xs">
+          {/* Quick Wallpaper Switcher Pill */}
+          <div className="relative">
+            <button
+              onClick={(e) => toggleDropdown(e, 'quick_wallpaper')}
+              className={`flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full font-sans transition-all duration-150 cursor-pointer ${
+                activeDropdown === 'quick_wallpaper'
+                  ? 'bg-blue-600 text-white shadow-xs'
+                  : 'bg-white/80 dark:bg-neutral-800/80 hover:bg-white dark:hover:bg-neutral-700 text-gray-800 dark:text-gray-200 border border-black/5 dark:border-white/10'
+              }`}
+              title={`Active Wallpaper: ${activeWallpaperItem.name} (Click to switch desktop picture)`}
+            >
+              <MaterialIcon
+                name="wallpaper"
+                size={13}
+                className={activeDropdown === 'quick_wallpaper' ? 'text-white' : 'text-sky-500'}
+              />
+              <span className="hidden sm:inline text-[10px] font-medium truncate max-w-[95px]">
+                {preferences.wallpaper === 'dynamic'
+                  ? `Dynamic: ${dynamicInfo.periodName.split(' ')[0]}`
+                  : activeWallpaperItem.tag || 'Wallpaper'}
+              </span>
+              <MaterialIcon
+                name="expand_more"
+                size={11}
+                className={activeDropdown === 'quick_wallpaper' ? 'text-white' : 'text-gray-400'}
+              />
+            </button>
+
+            {activeDropdown === 'quick_wallpaper' && (
+              <div className="absolute right-0 top-full mt-1.5 w-72 bg-white/95 dark:bg-neutral-850/95 text-gray-800 dark:text-gray-100 rounded-xl shadow-2xl border border-gray-300 dark:border-neutral-700 p-2.5 backdrop-blur-xl z-50 text-xs animate-fade-in">
+                <div className="flex justify-between items-center pb-1.5 border-b border-gray-200 dark:border-neutral-700 mb-1.5">
+                  <span className="font-bold text-[11px]">Desktop Pictures</span>
+                  <button
+                    onClick={() => {
+                      onOpenSysPrefs();
+                      setActiveDropdown(null);
+                    }}
+                    className="text-[10px] text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
+                  >
+                    Preferences...
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {WALLPAPER_LIST.slice(0, 6).map((w) => {
+                    const isCurrent = preferences.wallpaper === w.id;
+                    return (
+                      <button
+                        key={w.id}
+                        onClick={() => handleSelectWallpaper(w.id)}
+                        className={`p-1 rounded-lg border text-left flex flex-col items-start cursor-pointer transition-all ${
+                          isCurrent
+                            ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/40 font-bold text-blue-600 dark:text-blue-400'
+                            : 'border-gray-200 dark:border-neutral-700 hover:border-blue-400'
+                        }`}
+                      >
+                        <div className="w-full h-10 rounded-xs overflow-hidden mb-1 relative border border-black/10">
+                          {w.imageSrc ? (
+                            <img
+                              src={w.imageSrc}
+                              alt=""
+                              className="w-full h-full object-cover"
+                              referrerPolicy="no-referrer"
+                            />
+                          ) : (
+                            <div className="w-full h-full" style={{ background: w.gradientFallback }} />
+                          )}
+                          {isCurrent && (
+                            <div className="absolute top-0.5 right-0.5 w-3.5 h-3.5 bg-blue-600 text-white rounded-full flex items-center justify-center shadow-xs">
+                              <MaterialIcon name="check" size={10} />
+                            </div>
+                          )}
+                        </div>
+                        <span className="text-[10px] truncate w-full">{w.name}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Modern Voice / Speech Synthesis Trigger Pill */}
+          <button
+            onClick={onToggleSpeech}
+            className={`flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full font-sans transition-all duration-150 cursor-pointer ${
+              preferences.speechEnabled
+                ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/25'
+                : 'bg-white/80 dark:bg-neutral-800/80 hover:bg-white dark:hover:bg-neutral-700 text-gray-500 border border-black/5 dark:border-white/10'
+            }`}
+            title={
+              preferences.speechEnabled
+                ? 'Speech Voice Synthesis is ON (Click to Mute Voice)'
+                : 'Speech Voice Synthesis is OFF (Click to Enable Voice)'
+            }
+          >
+            <MaterialIcon
+              name={preferences.speechEnabled ? 'record_voice_over' : 'voice_over_off'}
+              size={13}
+              className={preferences.speechEnabled ? 'text-emerald-500 animate-pulse' : 'text-gray-400'}
+            />
+            <span className="hidden sm:inline text-[10px] font-medium">
+              {preferences.speechEnabled ? 'Voice' : 'Mute'}
+            </span>
+          </button>
+        </div>
+
+        {/* Floating Siri AI Overlay Trigger Pill / Button */}
         <button
-          onClick={onToggleSpeech}
-          className={`p-1 rounded-sm transition-colors cursor-pointer ${
-            preferences.speechEnabled ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400'
-          }`}
-          title={preferences.speechEnabled ? 'Speech Voice Synthesis is ON (Click to Mute)' : 'Speech Voice Synthesis is OFF'}
+          id="siri-floating-trigger-btn"
+          onClick={onTriggerSiri}
+          className="flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-gradient-to-r from-purple-600 via-indigo-600 to-sky-500 hover:from-purple-500 hover:to-sky-400 text-white shadow-xs hover:shadow-md hover:scale-105 active:scale-95 transition-all cursor-pointer font-sans"
+          title="Open Floating Siri AI Assistant (Click or ⌥Space)"
         >
-          <MaterialIcon name={preferences.speechEnabled ? 'record_voice_over' : 'voice_over_off'} size={14} />
+          <MaterialIcon name="auto_awesome" size={12} className="text-sky-200 animate-spin-slow" />
+          <span className="text-[10px] font-bold tracking-tight">Siri</span>
         </button>
 
         {/* Chime Sound FX Toggle */}
         <button
           onClick={onToggleSound}
-          className="p-1 rounded-sm hover:bg-black/10 dark:hover:bg-white/10 text-gray-600 dark:text-gray-300 cursor-pointer"
+          className="p-1 rounded-full hover:bg-black/10 dark:hover:bg-white/10 text-gray-600 dark:text-gray-300 cursor-pointer transition-colors"
           title={preferences.soundEffects ? 'Sound FX Enabled (Click to Mute)' : 'Sound FX Muted'}
         >
-          <MaterialIcon name={preferences.soundEffects ? 'volume_up' : 'volume_off'} size={14} />
+          <MaterialIcon name={preferences.soundEffects ? 'volume_up' : 'volume_off'} size={13} />
         </button>
 
         {/* Wi-Fi Icon */}
-        <span title="Wi-Fi: Connected to AI Studio Cloud Proxy">
-          <MaterialIcon name="wifi" size={14} className="text-gray-700 dark:text-gray-300" />
+        <span title="Wi-Fi: Connected to High Sierra AI Studio" className="px-0.5">
+          <MaterialIcon name="wifi" size={13} className="text-gray-700 dark:text-gray-300" />
         </span>
 
-        {/* Siri AI Assistant Trigger */}
-        <button
-          onClick={onTriggerSiri}
-          className="p-1 rounded-full bg-gradient-to-tr from-rose-500 via-purple-500 to-sky-400 text-white shadow-2xs hover:scale-105 transition-transform cursor-pointer"
-          title="Trigger Siri HighSierra AI Status"
-        >
-          <MaterialIcon name="auto_awesome" size={12} />
-        </button>
-
         {/* Clock */}
-        <span className="font-sans font-medium text-gray-800 dark:text-gray-200 pl-1">{timeString}</span>
+        <span className="font-sans font-medium text-gray-800 dark:text-gray-200 pl-0.5 pr-1">{timeString}</span>
       </div>
     </header>
   );
