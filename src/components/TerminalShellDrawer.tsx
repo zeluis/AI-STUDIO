@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Terminal, Play, Trash2, X, Copy, Check } from 'lucide-react';
+import { MaterialIcon } from './MaterialIcon';
 import { TerminalExecution } from '../types';
 
 interface TerminalShellDrawerProps {
@@ -39,7 +39,7 @@ export const TerminalShellDrawer: React.FC<TerminalShellDrawerProps> = ({
           <div className="flex items-center space-x-1.5">
             <button
               onClick={onClose}
-              className="w-3 h-3 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center text-[8px] text-black font-bold"
+              className="w-3 h-3 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center text-[8px] text-black font-bold cursor-pointer"
             >
               ✕
             </button>
@@ -47,7 +47,7 @@ export const TerminalShellDrawer: React.FC<TerminalShellDrawerProps> = ({
             <button className="w-3 h-3 rounded-full bg-emerald-500" />
           </div>
           <span className="text-[11px] font-semibold flex items-center space-x-1.5 ml-2">
-            <Terminal className="w-3.5 h-3.5 text-emerald-400" />
+            <MaterialIcon name="terminal" size={14} className="text-emerald-400" />
             <span>macOS HighSierra Terminal — bash — 80x24</span>
           </span>
         </div>
@@ -55,13 +55,13 @@ export const TerminalShellDrawer: React.FC<TerminalShellDrawerProps> = ({
         <div className="flex items-center space-x-2">
           <button
             onClick={onClearTerminal}
-            className="p-1 text-gray-400 hover:text-white rounded-xs hover:bg-neutral-800"
+            className="p-1 text-gray-400 hover:text-white rounded-xs hover:bg-neutral-800 cursor-pointer"
             title="Clear Terminal Buffer"
           >
-            <Trash2 className="w-3.5 h-3.5" />
+            <MaterialIcon name="delete_sweep" size={14} />
           </button>
-          <button onClick={onClose} className="text-gray-400 hover:text-white">
-            <X className="w-4 h-4" />
+          <button onClick={onClose} className="text-gray-400 hover:text-white cursor-pointer">
+            <MaterialIcon name="close" size={16} />
           </button>
         </div>
       </div>
@@ -80,9 +80,9 @@ export const TerminalShellDrawer: React.FC<TerminalShellDrawerProps> = ({
               <span className="font-bold">user@HighSierra-MacBookPro ~ % {exe.command}</span>
               <button
                 onClick={() => handleCopy(exe.output, exe.id)}
-                className="text-neutral-500 hover:text-gray-300 text-[10px] flex items-center space-x-1"
+                className="text-neutral-500 hover:text-gray-300 text-[10px] flex items-center space-x-1 cursor-pointer"
               >
-                {copiedId === exe.id ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                <MaterialIcon name={copiedId === exe.id ? 'check' : 'content_copy'} size={12} className={copiedId === exe.id ? 'text-emerald-400' : ''} />
                 <span>{copiedId === exe.id ? 'Copied' : 'Copy Output'}</span>
               </button>
             </div>
@@ -105,9 +105,9 @@ export const TerminalShellDrawer: React.FC<TerminalShellDrawerProps> = ({
         />
         <button
           type="submit"
-          className="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xs text-xs flex items-center space-x-1"
+          className="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xs text-xs flex items-center space-x-1 cursor-pointer"
         >
-          <Play className="w-3 h-3 fill-current" />
+          <MaterialIcon name="play_arrow" size={14} />
           <span>Exec</span>
         </button>
       </form>

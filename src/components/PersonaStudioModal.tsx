@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sparkles, Plus, Trash2, Edit3, Check, X, Shield, User } from 'lucide-react';
+import { MaterialIcon } from './MaterialIcon';
 import { Persona } from '../types';
 
 interface PersonaStudioModalProps {
@@ -48,21 +48,24 @@ export const PersonaStudioModal: React.FC<PersonaStudioModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 animate-fade-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 animate-fade-in select-none">
       <div className="w-full max-w-3xl bg-gray-100 dark:bg-neutral-800 text-gray-900 dark:text-neutral-100 rounded-lg shadow-2xl border border-gray-300 dark:border-neutral-700 overflow-hidden font-sans">
         {/* Title Bar */}
         <div className="flex items-center justify-between px-3 py-1.5 bg-gradient-to-b from-gray-200 to-gray-300 dark:from-neutral-700 dark:to-neutral-800 border-b border-gray-300 dark:border-neutral-700">
           <div className="flex items-center space-x-2">
             <button
               onClick={onClose}
-              className="w-3 h-3 rounded-full bg-red-500 hover:bg-red-600 border border-red-600 flex items-center justify-center text-[8px] font-bold text-red-950"
+              className="w-3 h-3 rounded-full bg-red-500 hover:bg-red-600 border border-red-600 flex items-center justify-center text-[8px] font-bold text-red-950 cursor-pointer"
             >
               ✕
             </button>
-            <span className="text-xs font-semibold">System Prompt & Persona Studio</span>
+            <span className="text-xs font-semibold flex items-center space-x-1">
+              <MaterialIcon name="psychology" size={14} className="text-purple-500 mr-1" />
+              <span>System Prompt & Persona Studio</span>
+            </span>
           </div>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-800 dark:hover:text-gray-200">
-            <X className="w-4 h-4" />
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 cursor-pointer">
+            <MaterialIcon name="close" size={16} />
           </button>
         </div>
 
@@ -76,9 +79,9 @@ export const PersonaStudioModal: React.FC<PersonaStudioModalProps> = ({
               </h3>
               <button
                 onClick={handleCreateNew}
-                className="px-2 py-0.5 bg-blue-600 text-white text-[11px] font-semibold rounded-xs hover:bg-blue-700 flex items-center space-x-1"
+                className="btn-macos-primary px-2 py-0.5 text-[11px] font-semibold flex items-center space-x-1 cursor-pointer"
               >
-                <Plus className="w-3 h-3" />
+                <MaterialIcon name="add" size={12} />
                 <span>New</span>
               </button>
             </div>
@@ -107,7 +110,7 @@ export const PersonaStudioModal: React.FC<PersonaStudioModalProps> = ({
                     </div>
                   </div>
 
-                  {selectedPersona.id === p.id && <span className="text-xs">✓</span>}
+                  {selectedPersona.id === p.id && <MaterialIcon name="check" size={14} />}
                 </div>
               ))}
             </div>
@@ -120,12 +123,12 @@ export const PersonaStudioModal: React.FC<PersonaStudioModalProps> = ({
               <div className="bg-white dark:bg-neutral-750 p-4 rounded-md border border-gray-300 dark:border-neutral-700 space-y-3 text-xs">
                 <div className="flex justify-between items-center border-b pb-2">
                   <h3 className="font-bold text-sm flex items-center space-x-1.5">
-                    <Edit3 className="w-4 h-4 text-blue-500" />
+                    <MaterialIcon name="edit" size={16} className="text-blue-500" />
                     <span>{isCreatingNew ? 'Create New Persona' : 'Edit Persona'}</span>
                   </h3>
                   <button
                     onClick={() => setEditingPersona(null)}
-                    className="text-gray-400 hover:text-gray-600"
+                    className="text-gray-400 hover:text-gray-600 cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -175,9 +178,9 @@ export const PersonaStudioModal: React.FC<PersonaStudioModalProps> = ({
                 <div className="flex justify-end space-x-2 pt-2">
                   <button
                     onClick={handleSaveEdit}
-                    className="px-4 py-1.5 bg-blue-600 text-white rounded-xs font-semibold flex items-center space-x-1"
+                    className="btn-macos-primary px-4 py-1.5 text-xs font-semibold flex items-center space-x-1 cursor-pointer"
                   >
-                    <Check className="w-3.5 h-3.5" />
+                    <MaterialIcon name="save" size={14} />
                     <span>Save Persona</span>
                   </button>
                 </div>
@@ -197,17 +200,17 @@ export const PersonaStudioModal: React.FC<PersonaStudioModalProps> = ({
                   <div className="flex space-x-2">
                     <button
                       onClick={() => setEditingPersona(selectedPersona)}
-                      className="px-2.5 py-1 bg-gray-100 dark:bg-neutral-700 hover:bg-gray-200 rounded-xs font-semibold flex items-center space-x-1 border"
+                      className="btn-macos px-2.5 py-1 text-xs font-semibold flex items-center space-x-1 cursor-pointer"
                     >
-                      <Edit3 className="w-3 h-3" />
+                      <MaterialIcon name="edit" size={12} />
                       <span>Edit</span>
                     </button>
                     {!selectedPersona.isBuiltIn && (
                       <button
                         onClick={() => onDeletePersona(selectedPersona.id)}
-                        className="px-2.5 py-1 bg-red-50 text-red-600 dark:bg-red-950 dark:text-red-300 rounded-xs font-semibold flex items-center space-x-1 border border-red-200"
+                        className="btn-macos px-2.5 py-1 text-xs font-semibold text-red-600 flex items-center space-x-1 cursor-pointer"
                       >
-                        <Trash2 className="w-3 h-3" />
+                        <MaterialIcon name="delete" size={12} />
                         <span>Delete</span>
                       </button>
                     )}
@@ -218,7 +221,7 @@ export const PersonaStudioModal: React.FC<PersonaStudioModalProps> = ({
                   <h4 className="font-bold text-xs uppercase tracking-wider text-gray-400 mb-1.5">
                     Active System Prompt
                   </h4>
-                  <div className="p-3 bg-gray-50 dark:bg-neutral-800 rounded-md border border-gray-200 dark:border-neutral-700 font-mono text-xs text-gray-800 dark:text-gray-200 leading-relaxed whitespace-pre-wrap">
+                  <div className="p-3 bg-gray-50 dark:bg-neutral-800 rounded-md border border-gray-200 dark:border-neutral-700 font-mono text-xs text-gray-800 dark:text-gray-200 leading-relaxed whitespace-pre-wrap select-text">
                     {selectedPersona.systemPrompt}
                   </div>
                 </div>
@@ -242,7 +245,7 @@ export const PersonaStudioModal: React.FC<PersonaStudioModalProps> = ({
         <div className="flex justify-end px-4 py-2 bg-gray-200 dark:bg-neutral-750 border-t border-gray-300 dark:border-neutral-700">
           <button
             onClick={onClose}
-            className="px-4 py-1 bg-gradient-to-b from-blue-500 to-blue-600 text-white rounded-sm text-xs font-semibold shadow-2xs hover:from-blue-600 hover:to-blue-700"
+            className="btn-macos-primary px-4 py-1 text-xs font-semibold cursor-pointer"
           >
             Done
           </button>

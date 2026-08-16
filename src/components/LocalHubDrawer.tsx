@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { HardDrive, Cpu, Sliders, CheckCircle2, AlertCircle, RefreshCw, Zap, Server } from 'lucide-react';
+import { MaterialIcon } from './MaterialIcon';
 import { ModelOption, HardwareSettings, SystemPreferences } from '../types';
 
 interface LocalHubDrawerProps {
@@ -64,12 +64,12 @@ export const LocalHubDrawer: React.FC<LocalHubDrawerProps> = ({
   };
 
   return (
-    <div className="bg-white dark:bg-neutral-800 text-gray-900 dark:text-neutral-100 rounded-lg shadow-xl border border-gray-300 dark:border-neutral-700 p-5 space-y-6">
+    <div className="bg-white dark:bg-neutral-800 text-gray-900 dark:text-neutral-100 rounded-lg shadow-xl border border-gray-300 dark:border-neutral-700 p-5 space-y-6 select-none font-sans">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-gray-200 dark:border-neutral-700 pb-3">
         <div className="flex items-center space-x-2.5">
           <div className="p-2 bg-emerald-100 dark:bg-emerald-950 text-emerald-600 rounded-md">
-            <Server className="w-5 h-5" />
+            <MaterialIcon name="dns" size={20} />
           </div>
           <div>
             <h2 className="font-bold text-sm">Ollama & LM Studio Local Model Hub</h2>
@@ -81,7 +81,7 @@ export const LocalHubDrawer: React.FC<LocalHubDrawerProps> = ({
 
         <button
           onClick={onClose}
-          className="px-3 py-1 bg-gray-200 dark:bg-neutral-700 hover:bg-gray-300 dark:hover:bg-neutral-600 rounded-sm text-xs font-semibold"
+          className="btn-macos px-3 py-1 text-xs font-semibold cursor-pointer"
         >
           Close Drawer
         </button>
@@ -92,7 +92,7 @@ export const LocalHubDrawer: React.FC<LocalHubDrawerProps> = ({
         {/* Left Box: Endpoint Configuration */}
         <div className="bg-gray-50 dark:bg-neutral-750 p-4 rounded-md border border-gray-200 dark:border-neutral-700 space-y-3 text-xs">
           <h3 className="font-bold text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 flex items-center space-x-1.5">
-            <HardDrive className="w-4 h-4 text-emerald-500" />
+            <MaterialIcon name="lan" size={16} className="text-emerald-500" />
             <span>Local Endpoint Configuration</span>
           </h3>
 
@@ -123,9 +123,13 @@ export const LocalHubDrawer: React.FC<LocalHubDrawerProps> = ({
             <button
               onClick={handleTestConnection}
               disabled={testingConnection}
-              className="px-3 py-1.5 bg-gradient-to-b from-emerald-500 to-emerald-600 text-white rounded-sm font-semibold flex items-center space-x-1.5 hover:from-emerald-600 hover:to-emerald-700 shadow-2xs disabled:opacity-50 cursor-pointer"
+              className="btn-macos-primary px-3 py-1.5 text-xs font-semibold flex items-center space-x-1.5 disabled:opacity-50 cursor-pointer"
             >
-              {testingConnection ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5" />}
+              <MaterialIcon
+                name={testingConnection ? 'autorenew' : 'bolt'}
+                size={14}
+                className={testingConnection ? 'animate-spin' : ''}
+              />
               <span>Test Connection</span>
             </button>
 
@@ -136,7 +140,7 @@ export const LocalHubDrawer: React.FC<LocalHubDrawerProps> = ({
                 onChange={(e) => onUpdatePreferences({ simulationMode: e.target.checked })}
                 className="rounded-xs text-emerald-600"
               />
-              <span className="font-semibold text-emerald-700 dark:text-emerald-400">Metal 2 Simulation Fallback</span>
+              <span className="font-semibold text-emerald-700 dark:text-emerald-400">Metal 2 Offline Simulation</span>
             </label>
           </div>
 
@@ -149,11 +153,11 @@ export const LocalHubDrawer: React.FC<LocalHubDrawerProps> = ({
                   : 'bg-red-50 text-red-800 border-red-300 dark:bg-red-950/60 dark:text-red-200'
               }`}
             >
-              {connectionStatus === 'success' ? (
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-              ) : (
-                <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
-              )}
+              <MaterialIcon
+                name={connectionStatus === 'success' ? 'check_circle' : 'error'}
+                size={16}
+                className={connectionStatus === 'success' ? 'text-emerald-600 shrink-0 mt-0.5' : 'text-red-600 shrink-0 mt-0.5'}
+              />
               <span className="leading-tight">{statusMessage}</span>
             </div>
           )}
@@ -162,7 +166,7 @@ export const LocalHubDrawer: React.FC<LocalHubDrawerProps> = ({
         {/* Right Box: Metal 2 Hardware Sliders */}
         <div className="bg-gray-50 dark:bg-neutral-750 p-4 rounded-md border border-gray-200 dark:border-neutral-700 space-y-4 text-xs">
           <h3 className="font-bold text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 flex items-center space-x-1.5">
-            <Sliders className="w-4 h-4 text-blue-500" />
+            <MaterialIcon name="tune" size={16} className="text-blue-500" />
             <span>Metal 2 Hardware Tuning Sliders</span>
           </h3>
 
@@ -220,7 +224,7 @@ export const LocalHubDrawer: React.FC<LocalHubDrawerProps> = ({
             <button
               key={m.id}
               onClick={() => onSelectModel(m)}
-              className={`p-3 rounded-md border text-left transition-all relative ${
+              className={`p-3 rounded-md border text-left transition-all relative cursor-pointer ${
                 selectedModel.id === m.id
                   ? 'border-emerald-500 bg-emerald-50/80 dark:bg-emerald-950/50 ring-2 ring-emerald-400/40 shadow-xs'
                   : 'border-gray-200 dark:border-neutral-700 bg-gray-50 dark:bg-neutral-750 hover:border-gray-300'
@@ -228,7 +232,7 @@ export const LocalHubDrawer: React.FC<LocalHubDrawerProps> = ({
             >
               {selectedModel.id === m.id && (
                 <div className="absolute top-2 right-2 w-4 h-4 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[10px]">
-                  ✓
+                  <MaterialIcon name="check" size={12} />
                 </div>
               )}
               <h4 className="font-bold text-xs pr-4 mb-0.5">{m.name}</h4>

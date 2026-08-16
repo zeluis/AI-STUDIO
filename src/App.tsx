@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   ChatMessage,
+  ChatSession,
   ModelOption,
   Persona,
   SystemPreferences,
@@ -8,6 +9,8 @@ import {
   SystemTelemetry,
   TerminalExecution,
   ImageAttachment,
+  ThemeName,
+  WallpaperName,
 } from './types';
 import {
   DEFAULT_MODELS,
@@ -16,6 +19,7 @@ import {
   DEFAULT_HARDWARE,
   INITIAL_TELEMETRY,
 } from './data/defaults';
+import { WALLPAPER_LIST, getDynamicWallpaperForHour } from './data/wallpapers';
 import { playChime } from './lib/sound';
 import { MenuBar } from './components/MenuBar';
 import { WindowChrome } from './components/WindowChrome';
@@ -28,12 +32,20 @@ import { SystemPreferencesModal } from './components/SystemPreferencesModal';
 import { InspectorDrawer } from './components/InspectorDrawer';
 import { TerminalShellDrawer } from './components/TerminalShellDrawer';
 import { InstallerModal } from './components/InstallerModal';
+import { MaterialIcon } from './components/MaterialIcon';
 
 export default function App() {
-  // Application State with APFS Storage Local Persistence
+  // 1. Preferences with APFS LocalStorage Persistence
   const [preferences, setPreferences] = useState<SystemPreferences>(() => {
     const saved = localStorage.getItem('highsierra_preferences');
-    return saved ? JSON.parse(saved) : DEFAULT_PREFERENCES;
+    if (saved) {
+      try {
+        return { ...DEFAULT_PREFERENCES, ...JSON.parse(saved) };
+      } catch {
+        return DEFAULT_PREFERENCES;
+      }
+    }
+    return DEFAULT_PREFERENCES;
   });
 
   const [hardware, setHardware] = useState<HardwareSettings>(() => {
@@ -49,15 +61,56 @@ export default function App() {
   const [selectedPersona, setSelectedPersona] = useState<Persona>(personas[0]);
 
   const [models] = useState<ModelOption[]>(DEFAULT_MODELS);
-  const [selectedModel, setSelectedModel] = useState<ModelOption>(DEFAULT_MODELS[0]);
+  const [selectedModel, setSelectedModel] = useState<ModelOption>(() => {
+    return DEFAULT_MODELS[0];
+  });
+
+  // Ensure selected model points to valid updated model
+  useEffect(() => {
+    if (selectedModel && selectedModel.id.includes('3.6')) {
+      const updated = DEFAULT_MODELS.find((m) => m.id === 'gemini-3.7-flash') || DEFAULT_MODELS[0];
+      setSelectedModel(updated);
+    }
+  }, [selectedModel]);
 
   const [temperature, setTemperature] = useState<number>(0.7);
   const [topP, setTopP] = useState<number>(0.9);
 
-  const [messages, setMessages] = useState<ChatMessage[]>(() => {
-    const saved = localStorage.getItem('highsierra_chat_messages');
-    return saved ? JSON.parse(saved) : [];
+  // 2. Multi-Session APFS Chat Management
+  const [sessions, setSessions] = useState<ChatSession[]>(() => {
+    const saved = localStorage.getItem('highsierra_chat_sessions');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch {
+        // fallback
+      }
+    }
+    // Create initial welcome session
+    const initialSession: ChatSession = {
+      id: `sess_${Date.now()}`,
+      title: 'High Sierra Welcome Session',
+      createdAt: new Date().toLocaleDateString(),
+      updatedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      messages: [],
+      personaId: DEFAULT_PERSONAS[0].id,
+      modelId: DEFAULT_MODELS[0].id,
+      temperature: 0.7,
+      topP: 0.9,
+    };
+    return [initialSession];
   });
+
+  const [activeSessionId, setActiveSessionId] = useState<string>(() => {
+    return sessions[0]?.id || `sess_${Date.now()}`;
+  });
+
+  const activeSession = useMemo(() => {
+    return sessions.find((s) => s.id === activeSessionId) || sessions[0];
+  }, [sessions, activeSessionId]);
+
+  const messages = activeSession?.messages || [];
 
   const [telemetry, setTelemetry] = useState<SystemTelemetry>(INITIAL_TELEMETRY);
   const [terminalExecutions, setTerminalExecutions] = useState<TerminalExecution[]>([]);
@@ -74,14 +127,17 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
 
-  // Play startup chime on boot once
+  // Desktop Context Menu State
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+
+  // Startup chime
   useEffect(() => {
     if (preferences.soundEffects) {
       playChime('startup', true);
     }
   }, []);
 
-  // Sync APFS Persistence to LocalStorage
+  // Sync to APFS Storage
   useEffect(() => {
     localStorage.setItem('highsierra_preferences', JSON.stringify(preferences));
   }, [preferences]);
@@ -95,14 +151,17 @@ export default function App() {
   }, [personas]);
 
   useEffect(() => {
-    localStorage.setItem('highsierra_chat_messages', JSON.stringify(messages));
-  }, [messages]);
+    localStorage.setItem('highsierra_chat_sessions', JSON.stringify(sessions));
+  }, [sessions]);
 
-  // Update temperature & topP when selected persona changes
+  // Sync theme to root class for Tailwind dark mode
   useEffect(() => {
-    setTemperature(selectedPersona.defaultTemp);
-    setTopP(selectedPersona.defaultTopP);
-  }, [selectedPersona]);
+    if (preferences.theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [preferences.theme]);
 
   // Handle Model Selection
   const handleSelectModel = (model: ModelOption) => {
@@ -110,7 +169,90 @@ export default function App() {
     playChime('click', preferences.soundEffects);
   };
 
-  // Handle Send Message
+  // Session Management Handlers
+  const handleSelectSession = (id: string) => {
+    setActiveSessionId(id);
+    playChime('click', preferences.soundEffects);
+  };
+
+  const handleNewSession = () => {
+    const newSess: ChatSession = {
+      id: `sess_${Date.now()}`,
+      title: `Conversation ${sessions.length + 1}`,
+      createdAt: new Date().toLocaleDateString(),
+      updatedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      messages: [],
+      personaId: selectedPersona.id,
+      modelId: selectedModel.id,
+      temperature,
+      topP,
+    };
+    setSessions((prev) => [newSess, ...prev]);
+    setActiveSessionId(newSess.id);
+    playChime('send', preferences.soundEffects);
+  };
+
+  const handleDeleteSession = (id: string) => {
+    setSessions((prev) => {
+      const filtered = prev.filter((s) => s.id !== id);
+      if (filtered.length === 0) {
+        const fresh: ChatSession = {
+          id: `sess_${Date.now()}`,
+          title: 'New Conversation',
+          createdAt: new Date().toLocaleDateString(),
+          updatedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          messages: [],
+          personaId: selectedPersona.id,
+          modelId: selectedModel.id,
+          temperature,
+          topP,
+        };
+        setActiveSessionId(fresh.id);
+        return [fresh];
+      }
+      if (activeSessionId === id) {
+        setActiveSessionId(filtered[0].id);
+      }
+      return filtered;
+    });
+    playChime('trash', preferences.soundEffects);
+  };
+
+  const handleClearAllSessions = () => {
+    const fresh: ChatSession = {
+      id: `sess_${Date.now()}`,
+      title: 'New Conversation',
+      createdAt: new Date().toLocaleDateString(),
+      updatedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      messages: [],
+      personaId: selectedPersona.id,
+      modelId: selectedModel.id,
+      temperature,
+      topP,
+    };
+    setSessions([fresh]);
+    setActiveSessionId(fresh.id);
+    playChime('trash', preferences.soundEffects);
+  };
+
+  const updateActiveSessionMessages = (updater: (prevMessages: ChatMessage[]) => ChatMessage[], sessionTitle?: string) => {
+    setSessions((prev) =>
+      prev.map((s) => {
+        if (s.id === activeSessionId) {
+          const updatedMessages = updater(s.messages);
+          return {
+            ...s,
+            messages: updatedMessages,
+            title: sessionTitle || s.title,
+            updatedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          };
+        }
+        return s;
+      })
+    );
+  };
+
+  // Send Message Handler
   const handleSendMessage = async (text: string, imageAttachment?: ImageAttachment) => {
     if (!text.trim() && !imageAttachment) return;
 
@@ -123,8 +265,16 @@ export default function App() {
       imageAttachment,
     };
 
-    const newMessages = [...messages, userMsg];
-    setMessages(newMessages);
+    const currentMessages = activeSession?.messages || [];
+    const newMessages = [...currentMessages, userMsg];
+
+    // Auto generate session title from first prompt if needed
+    let newTitle: string | undefined = undefined;
+    if (currentMessages.length === 0 && text.trim()) {
+      newTitle = text.slice(0, 30) + (text.length > 30 ? '...' : '');
+    }
+
+    updateActiveSessionMessages(() => newMessages, newTitle);
     setIsLoading(true);
     playChime('send', preferences.soundEffects);
 
@@ -166,7 +316,7 @@ export default function App() {
         isLocal: selectedModel.isLocal,
       };
 
-      setMessages((prev) => [...prev, assistantMsg]);
+      updateActiveSessionMessages((prev) => [...prev, assistantMsg]);
       playChime('receive', preferences.soundEffects);
 
       // Update telemetry token speed and total processed
@@ -176,8 +326,8 @@ export default function App() {
         totalTokensProcessed: prev.totalTokensProcessed + (data.tokensUsed || 100),
       }));
 
-      // Speak text if auto-TTS is enabled
-      if (preferences.autoTtS) {
+      // Speak text if auto-TTS or speech is active
+      if (preferences.speechEnabled && preferences.autoTtS) {
         speakText(data.text);
       }
     } catch (err: any) {
@@ -192,7 +342,7 @@ export default function App() {
         model: selectedModel.name,
       };
 
-      setMessages((prev) => [...prev, errorMsg]);
+      updateActiveSessionMessages((prev) => [...prev, errorMsg]);
     } finally {
       setIsLoading(false);
     }
@@ -201,13 +351,15 @@ export default function App() {
   // Speech Synthesis Output (TTS)
   const speakText = (text: string) => {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+    if (!preferences.speechEnabled) return;
+
     window.speechSynthesis.cancel();
 
     // Clean markdown stars/headers for spoken clarity
-    const cleanText = text.replace(/[*#`_~]/g, '').slice(0, 300);
+    const cleanText = text.replace(/[*#`_~]/g, '').slice(0, 350);
     const utterance = new SpeechSynthesisUtterance(cleanText);
-    utterance.rate = 1.0;
-    utterance.pitch = 1.0;
+    utterance.rate = preferences.speechRate || 1.0;
+    utterance.pitch = preferences.speechPitch || 1.0;
 
     utterance.onend = () => setIsSpeaking(false);
     utterance.onerror = () => setIsSpeaking(false);
@@ -254,72 +406,209 @@ export default function App() {
     setShowTerminal(true);
   };
 
-  // Session Export & Import
-  const handleExportSession = () => {
-    const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(messages, null, 2));
-    const downloadAnchor = document.createElement('a');
-    downloadAnchor.setAttribute('href', dataStr);
-    downloadAnchor.setAttribute('download', `HighSierra_Chat_Session_${Date.now()}.json`);
-    document.body.appendChild(downloadAnchor);
-    downloadAnchor.click();
-    downloadAnchor.remove();
-  };
+  // Export Session to JSON or TXT
+  const handleExportSession = (format: 'json' | 'txt' = 'json') => {
+    if (format === 'txt') {
+      const lines = [
+        `=============================================================`,
+        `HighSierra AI Studio Conversation Session`,
+        `Title: ${activeSession?.title || 'Session'}`,
+        `Export Date: ${new Date().toLocaleString()}`,
+        `Model: ${selectedModel.name}`,
+        `Persona: ${selectedPersona.name}`,
+        `=============================================================\n`,
+      ];
+      messages.forEach((m) => {
+        lines.push(`[${m.timestamp}] ${m.role.toUpperCase()} (${m.model}):`);
+        lines.push(m.content);
+        lines.push('\n-------------------------------------------------------------\n');
+      });
 
-  const handleImportSession = () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'application/json';
-    input.onchange = (e: any) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        try {
-          const parsed = JSON.parse(event.target?.result as string);
-          if (Array.isArray(parsed)) {
-            setMessages(parsed);
-            playChime('receive', preferences.soundEffects);
-          }
-        } catch (_err) {
-          playChime('error', preferences.soundEffects);
-        }
-      };
-      reader.readAsText(file);
-    };
-    input.click();
-  };
-
-  const handleClearSession = () => {
-    setMessages([]);
-    playChime('trash', preferences.soundEffects);
-  };
-
-  // Get Wallpaper Background Gradient CSS class
-  const getWallpaperStyle = () => {
-    switch (preferences.wallpaper) {
-      case 'sunset':
-        return 'bg-gradient-to-br from-amber-500 via-rose-600 to-purple-950';
-      case 'snow':
-        return 'bg-gradient-to-br from-slate-300 via-sky-200 to-blue-500';
-      case 'granite':
-        return 'bg-gradient-to-br from-stone-700 via-zinc-800 to-slate-950';
-      case 'space':
-        return 'bg-gradient-to-br from-indigo-950 via-slate-900 to-black';
-      case 'highsierra':
-      default:
-        return 'bg-gradient-to-br from-sky-600 via-blue-800 to-indigo-950';
+      const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = `HighSierra_Chat_${Date.now()}.txt`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+    } else {
+      const dataStr =
+        'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(activeSession, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute('href', dataStr);
+      downloadAnchor.setAttribute('download', `HighSierra_Session_${Date.now()}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
     }
   };
+
+  // Import Session File
+  const handleImportSession = (file?: File) => {
+    if (!file) {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = '.json,.txt';
+      input.onchange = (e: any) => {
+        const selected = e.target.files?.[0];
+        if (selected) handleImportSession(selected);
+      };
+      input.click();
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const text = event.target?.result as string;
+        if (file.name.endsWith('.json')) {
+          const parsed = JSON.parse(text);
+          if (parsed && Array.isArray(parsed.messages)) {
+            const importedSession: ChatSession = {
+              ...parsed,
+              id: `sess_imported_${Date.now()}`,
+              title: parsed.title ? `Imported: ${parsed.title}` : `Imported ${file.name}`,
+              updatedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            };
+            setSessions((prev) => [importedSession, ...prev]);
+            setActiveSessionId(importedSession.id);
+            playChime('receive', preferences.soundEffects);
+            return;
+          } else if (Array.isArray(parsed)) {
+            // Legacy message array
+            const importedSession: ChatSession = {
+              id: `sess_imported_${Date.now()}`,
+              title: `Imported History (${file.name})`,
+              createdAt: new Date().toLocaleDateString(),
+              updatedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              messages: parsed,
+              personaId: selectedPersona.id,
+              modelId: selectedModel.id,
+              temperature,
+              topP,
+            };
+            setSessions((prev) => [importedSession, ...prev]);
+            setActiveSessionId(importedSession.id);
+            playChime('receive', preferences.soundEffects);
+            return;
+          }
+        } else {
+          // Parse .txt
+          const userMsg: ChatMessage = {
+            id: `msg_imported_${Date.now()}`,
+            role: 'assistant',
+            content: `📄 **Imported Transcript (${file.name})**\n\n` + text,
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            model: selectedModel.name,
+          };
+          const importedSession: ChatSession = {
+            id: `sess_txt_${Date.now()}`,
+            title: `Text: ${file.name}`,
+            createdAt: new Date().toLocaleDateString(),
+            updatedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            messages: [userMsg],
+            personaId: selectedPersona.id,
+            modelId: selectedModel.id,
+            temperature,
+            topP,
+          };
+          setSessions((prev) => [importedSession, ...prev]);
+          setActiveSessionId(importedSession.id);
+          playChime('receive', preferences.soundEffects);
+        }
+      } catch (err) {
+        console.error('Failed to import session:', err);
+        playChime('error', preferences.soundEffects);
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  // Get Wallpaper Background Image / Style
+  const wallpaperStyle = useMemo(() => {
+    const w = preferences.wallpaper;
+
+    if (w === 'custom' && preferences.customWallpaperUrl) {
+      return {
+        backgroundImage: `url(${preferences.customWallpaperUrl})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        backgroundColor: '#0F172A',
+      };
+    }
+
+    if (w === 'dynamic') {
+      const hour = new Date().getHours();
+      const dyn = getDynamicWallpaperForHour(hour);
+      return {
+        backgroundImage: `url(${dyn.imageSrc})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        backgroundColor: '#0F172A',
+      };
+    }
+
+    const item = WALLPAPER_LIST.find((wp) => wp.id === w);
+    if (item && item.imageSrc) {
+      return {
+        backgroundImage: `url(${item.imageSrc})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        backgroundColor: '#0F172A',
+      };
+    }
+
+    if (item && item.gradientFallback) {
+      return {
+        background: item.gradientFallback,
+      };
+    }
+
+    return { background: 'linear-gradient(135deg, #0284C7 0%, #1D4ED8 50%, #0F172A 100%)' };
+  }, [preferences.wallpaper, preferences.customWallpaperUrl]);
+
+  // Desktop Right-Click Context Menu Handler
+  const handleContextMenu = (e: React.MouseEvent) => {
+    // Only open on desktop background (not inside child buttons or inputs)
+    if ((e.target as HTMLElement).id === 'mac-desktop-container' || (e.target as HTMLElement).id === 'mac-window-frame') {
+      e.preventDefault();
+      setContextMenu({ x: e.clientX, y: e.clientY });
+      playChime('click', preferences.soundEffects);
+    }
+  };
+
+  useEffect(() => {
+    const handleCloseMenu = () => setContextMenu(null);
+    window.addEventListener('click', handleCloseMenu);
+    return () => window.removeEventListener('click', handleCloseMenu);
+  }, []);
 
   return (
     <div
       id="mac-desktop-container"
-      className={`h-screen w-screen flex flex-col overflow-hidden font-sans select-none transition-colors duration-500 ${getWallpaperStyle()}`}
+      onContextMenu={handleContextMenu}
+      style={wallpaperStyle}
+      className="h-screen w-screen flex flex-col overflow-hidden font-sans select-none relative"
     >
+      {/* Optional Wallpaper Blur & Dimming Overlay */}
+      {(preferences.wallpaperBlur > 0 || preferences.wallpaperDim > 0) && (
+        <div
+          className="absolute inset-0 pointer-events-none transition-all duration-300"
+          style={{
+            backdropFilter: preferences.wallpaperBlur > 0 ? `blur(${preferences.wallpaperBlur}px)` : undefined,
+            backgroundColor: preferences.wallpaperDim > 0 ? `rgba(0,0,0, ${preferences.wallpaperDim / 100})` : undefined,
+          }}
+        />
+      )}
+
       {/* Top Apple Menu Bar */}
       <MenuBar
         telemetry={telemetry}
         preferences={preferences}
+        onUpdatePreferences={(updated) => setPreferences((p) => ({ ...p, ...updated }))}
         selectedModel={selectedModel}
         models={models}
         onSelectModel={handleSelectModel}
@@ -328,25 +617,33 @@ export default function App() {
         onOpenActivityMonitor={() => setShowActivityMonitor(true)}
         onOpenLocalHub={() => setActiveTab('local')}
         onOpenPersonaStudio={() => setShowPersonaStudio(true)}
-        onNewSession={handleClearSession}
-        onClearSession={handleClearSession}
+        onNewSession={handleNewSession}
+        onClearSession={() => handleDeleteSession(activeSessionId)}
         onExportSession={handleExportSession}
         onImportSession={handleImportSession}
         onToggleInspector={() => setShowInspector(!showInspector)}
         onToggleTerminal={() => setShowTerminal(!showTerminal)}
         onToggleSound={() => setPreferences((p) => ({ ...p, soundEffects: !p.soundEffects }))}
+        onToggleSpeech={() => {
+          setPreferences((p) => {
+            const next = !p.speechEnabled;
+            if (!next) stopSpeaking();
+            return { ...p, speechEnabled: next };
+          });
+        }}
         onTriggerSiri={() => {
-          handleSendMessage('Hello Siri AI! Provide a quick status check of macOS High Sierra AI Studio.');
+          handleSendMessage('Hello Siri AI! Provide a quick system and telemetry check of macOS High Sierra AI Studio.');
         }}
         onOpenInstaller={() => setShowInstaller(true)}
       />
 
       {/* Main High Sierra Desktop Window */}
-      <main id="mac-window-frame" className="flex-1 p-2 sm:p-4 flex flex-col overflow-hidden">
-        <div className="flex-1 bg-white/90 dark:bg-neutral-900/90 backdrop-blur-xl rounded-lg shadow-2xl border border-white/30 dark:border-neutral-700 flex flex-col overflow-hidden max-w-7xl w-full mx-auto">
+      <main id="mac-window-frame" className="flex-1 p-2 sm:p-3 flex flex-col overflow-hidden relative z-10">
+        <div className="flex-1 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-2xl rounded-lg shadow-2xl border border-white/40 dark:border-neutral-700 flex flex-col overflow-hidden max-w-7xl w-full mx-auto">
           {/* Window Chrome Titlebar */}
           <WindowChrome
             preferences={preferences}
+            onUpdateTheme={(theme: ThemeName) => setPreferences((p) => ({ ...p, theme }))}
             selectedModel={selectedModel}
             selectedPersona={selectedPersona}
             activeTab={activeTab}
@@ -355,7 +652,7 @@ export default function App() {
             onToggleInspector={() => setShowInspector(!showInspector)}
             showTerminal={showTerminal}
             onToggleTerminal={() => setShowTerminal(!showTerminal)}
-            onNewSession={handleClearSession}
+            onNewSession={handleNewSession}
             onOpenSysPrefs={() => setShowSysPrefs(true)}
           />
 
@@ -365,6 +662,12 @@ export default function App() {
             <div className="flex-1 flex flex-col overflow-hidden">
               {activeTab === 'chat' && (
                 <ChatWorkspace
+                  sessions={sessions}
+                  activeSessionId={activeSessionId}
+                  onSelectSession={handleSelectSession}
+                  onNewSession={handleNewSession}
+                  onDeleteSession={handleDeleteSession}
+                  onClearAllSessions={handleClearAllSessions}
                   messages={messages}
                   onSendMessage={handleSendMessage}
                   isLoading={isLoading}
@@ -374,6 +677,16 @@ export default function App() {
                   onSpeakText={speakText}
                   isSpeaking={isSpeaking}
                   onStopSpeaking={stopSpeaking}
+                  speechEnabled={preferences.speechEnabled}
+                  onToggleSpeech={() =>
+                    setPreferences((p) => {
+                      const next = !p.speechEnabled;
+                      if (!next) stopSpeaking();
+                      return { ...p, speechEnabled: next };
+                    })
+                  }
+                  onExportSession={handleExportSession}
+                  onImportSession={handleImportSession}
                 />
               )}
 
@@ -424,7 +737,7 @@ export default function App() {
                 </div>
               )}
 
-              {/* Bottom HighSierra Terminal Drawer if toggled */}
+              {/* Bottom HighSierra Terminal Drawer */}
               {showTerminal && (
                 <TerminalShellDrawer
                   executions={terminalExecutions}
@@ -435,7 +748,7 @@ export default function App() {
               )}
             </div>
 
-            {/* Right Inspector Drawer if toggled */}
+            {/* Right Inspector Drawer */}
             {showInspector && (
               <InspectorDrawer
                 temperature={temperature}
@@ -445,11 +758,119 @@ export default function App() {
                 selectedModel={selectedModel}
                 selectedPersona={selectedPersona}
                 onClose={() => setShowInspector(false)}
+                onExportSession={handleExportSession}
+                onDeleteSession={() => handleDeleteSession(activeSessionId)}
+                onClearAllSessions={handleClearAllSessions}
               />
             )}
           </div>
         </div>
       </main>
+
+      {/* Desktop Context Menu */}
+      {contextMenu && (
+        <div
+          className="fixed z-50 bg-white/95 dark:bg-neutral-800/95 text-gray-800 dark:text-gray-100 rounded-md shadow-2xl border border-gray-300 dark:border-neutral-700 py-1 backdrop-blur-xl text-xs w-52 select-none"
+          style={{ top: contextMenu.y, left: contextMenu.x }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            onClick={() => {
+              handleNewSession();
+              setContextMenu(null);
+            }}
+            className="w-full text-left px-3 py-1.5 hover:bg-blue-600 hover:text-white flex items-center justify-between"
+          >
+            <span>New AI Conversation</span>
+            <span className="text-[10px] font-mono opacity-60">⌘N</span>
+          </button>
+          <button
+            onClick={() => {
+              setShowTerminal(true);
+              setContextMenu(null);
+            }}
+            className="w-full text-left px-3 py-1.5 hover:bg-blue-600 hover:text-white flex items-center justify-between"
+          >
+            <span>Open Terminal Shell</span>
+            <span className="text-[10px] font-mono opacity-60">⌘T</span>
+          </button>
+          <div className="my-1 border-t border-gray-200 dark:border-neutral-700" />
+          <div className="px-3 py-1 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+            Quick Desktop Picture
+          </div>
+          <button
+            onClick={() => {
+              setPreferences((p) => ({ ...p, wallpaper: 'highsierra' }));
+              setContextMenu(null);
+            }}
+            className="w-full text-left px-3 py-1 hover:bg-blue-600 hover:text-white flex items-center justify-between text-[11px]"
+          >
+            <span>macOS High Sierra Lake</span>
+            {preferences.wallpaper === 'highsierra' && <MaterialIcon name="check" size={12} />}
+          </button>
+          <button
+            onClick={() => {
+              setPreferences((p) => ({ ...p, wallpaper: 'sunset' }));
+              setContextMenu(null);
+            }}
+            className="w-full text-left px-3 py-1 hover:bg-blue-600 hover:text-white flex items-center justify-between text-[11px]"
+          >
+            <span>High Sierra Sunset Glow</span>
+            {preferences.wallpaper === 'sunset' && <MaterialIcon name="check" size={12} />}
+          </button>
+          <button
+            onClick={() => {
+              setPreferences((p) => ({ ...p, wallpaper: 'granite' }));
+              setContextMenu(null);
+            }}
+            className="w-full text-left px-3 py-1 hover:bg-blue-600 hover:text-white flex items-center justify-between text-[11px]"
+          >
+            <span>Yosemite El Capitan</span>
+            {preferences.wallpaper === 'granite' && <MaterialIcon name="check" size={12} />}
+          </button>
+          <button
+            onClick={() => {
+              setPreferences((p) => ({ ...p, wallpaper: 'dynamic' }));
+              setContextMenu(null);
+            }}
+            className="w-full text-left px-3 py-1 hover:bg-blue-600 hover:text-white flex items-center justify-between text-[11px] font-semibold text-blue-600 dark:text-blue-400"
+          >
+            <span>Dynamic Time-of-Day (24h)</span>
+            {preferences.wallpaper === 'dynamic' && <MaterialIcon name="check" size={12} />}
+          </button>
+          <div className="my-1 border-t border-gray-200 dark:border-neutral-700" />
+          <button
+            onClick={() => {
+              setShowSysPrefs(true);
+              setContextMenu(null);
+            }}
+            className="w-full text-left px-3 py-1.5 hover:bg-blue-600 hover:text-white flex items-center space-x-1.5"
+          >
+            <MaterialIcon name="wallpaper" size={14} />
+            <span>Desktop Pictures & Preferences...</span>
+          </button>
+          <button
+            onClick={() => {
+              setShowSysPrefs(true);
+              setContextMenu(null);
+            }}
+            className="w-full text-left px-3 py-1.5 hover:bg-blue-600 hover:text-white flex items-center space-x-1.5"
+          >
+            <MaterialIcon name="palette" size={14} />
+            <span>Change Appearance Theme...</span>
+          </button>
+          <div className="my-1 border-t border-gray-200 dark:border-neutral-700" />
+          <button
+            onClick={() => {
+              setShowAboutMac(true);
+              setContextMenu(null);
+            }}
+            className="w-full text-left px-3 py-1.5 hover:bg-blue-600 hover:text-white"
+          >
+            About macOS High Sierra AI...
+          </button>
+        </div>
+      )}
 
       {/* Global Modals */}
       {showAboutMac && (

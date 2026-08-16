@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Apple, Download, HardDrive, CheckCircle2, ArrowRight, X } from 'lucide-react';
+import { MaterialIcon } from './MaterialIcon';
 import { playChime } from '../lib/sound';
 
 interface InstallerModalProps {
@@ -89,21 +89,21 @@ open "$APP_DIR"
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-fade-in font-sans">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-fade-in font-sans select-none">
       <div className="w-full max-w-xl bg-gray-100 dark:bg-neutral-800 text-gray-900 dark:text-neutral-100 rounded-lg shadow-2xl border border-gray-300 dark:border-neutral-700 overflow-hidden">
         {/* Title Bar */}
         <div className="flex items-center justify-between px-3 py-1.5 bg-gradient-to-b from-gray-200 to-gray-300 dark:from-neutral-700 dark:to-neutral-800 border-b border-gray-300 dark:border-neutral-700">
           <div className="flex items-center space-x-2">
             <button
               onClick={onClose}
-              className="w-3 h-3 rounded-full bg-red-500 hover:bg-red-600 border border-red-600 flex items-center justify-center text-[8px] font-bold text-red-950"
+              className="w-3 h-3 rounded-full bg-red-500 hover:bg-red-600 border border-red-600 flex items-center justify-center text-[8px] font-bold text-red-950 cursor-pointer"
             >
               ✕
             </button>
             <span className="text-xs font-semibold">Install HighSierra AI Studio</span>
           </div>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-800 dark:hover:text-gray-200">
-            <X className="w-4 h-4" />
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 cursor-pointer">
+            <MaterialIcon name="close" size={16} />
           </button>
         </div>
 
@@ -139,8 +139,8 @@ open "$APP_DIR"
             {step === 'intro' && (
               <div className="space-y-4">
                 <div className="flex items-center space-x-3">
-                  <div className="p-3 bg-gradient-to-tr from-sky-400 to-blue-600 rounded-xl text-white shadow-md">
-                    <Apple className="w-8 h-8 fill-current" />
+                  <div className="p-3 bg-gradient-to-tr from-sky-400 to-blue-600 rounded-xl text-white shadow-md flex items-center justify-center">
+                    <span className="text-3xl leading-none"></span>
                   </div>
                   <div>
                     <h2 className="font-bold text-base">Welcome to the HighSierra AI Studio Installer</h2>
@@ -165,7 +165,7 @@ open "$APP_DIR"
               <div className="space-y-4">
                 <h2 className="font-bold text-sm">Select a Destination Volume</h2>
                 <div className="p-4 border-2 border-blue-500 bg-blue-50/50 dark:bg-blue-950/40 rounded-lg flex items-center space-x-3">
-                  <HardDrive className="w-10 h-10 text-emerald-600 shrink-0" />
+                  <MaterialIcon name="hard_drive" size={36} className="text-emerald-600 shrink-0" />
                   <div>
                     <h3 className="font-bold text-xs">Macintosh HD (APFS Volume)</h3>
                     <p className="text-[11px] text-gray-500">Install for all users on this computer</p>
@@ -204,7 +204,7 @@ open "$APP_DIR"
             {step === 'summary' && (
               <div className="space-y-4 text-center my-auto">
                 <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-600 flex items-center justify-center mx-auto">
-                  <CheckCircle2 className="w-8 h-8" />
+                  <MaterialIcon name="check_circle" size={32} />
                 </div>
                 <h2 className="font-bold text-base text-gray-900 dark:text-white">
                   The installation was successful!
@@ -216,9 +216,9 @@ open "$APP_DIR"
                 <div className="pt-2">
                   <button
                     onClick={downloadNativeLauncherScript}
-                    className="px-4 py-2 bg-gradient-to-b from-emerald-500 to-emerald-600 text-white text-xs font-bold rounded-md hover:from-emerald-600 hover:to-emerald-700 shadow-md flex items-center space-x-2 mx-auto cursor-pointer"
+                    className="btn-macos-primary px-4 py-2 text-xs font-bold flex items-center space-x-2 mx-auto cursor-pointer"
                   >
-                    <Download className="w-4 h-4" />
+                    <MaterialIcon name="download" size={16} />
                     <span>Download Native App Launcher (.command)</span>
                   </button>
                 </div>
@@ -229,7 +229,7 @@ open "$APP_DIR"
             <div className="flex justify-between items-center pt-4 border-t border-gray-200 dark:border-neutral-700">
               <button
                 onClick={onClose}
-                className="px-3 py-1 bg-gray-200 dark:bg-neutral-700 hover:bg-gray-300 rounded-sm text-xs font-semibold"
+                className="btn-macos px-3 py-1 text-xs font-semibold cursor-pointer"
               >
                 Cancel
               </button>
@@ -241,10 +241,10 @@ open "$APP_DIR"
                       setStep('destination');
                       playChime('click', soundEnabled);
                     }}
-                    className="px-4 py-1 bg-gradient-to-b from-blue-500 to-blue-600 text-white text-xs font-bold rounded-sm hover:from-blue-600 hover:to-blue-700 shadow-xs flex items-center space-x-1 cursor-pointer"
+                    className="btn-macos-primary px-4 py-1 text-xs font-bold flex items-center space-x-1 cursor-pointer"
                   >
                     <span>Continue</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
+                    <MaterialIcon name="arrow_forward" size={14} />
                   </button>
                 )}
 
@@ -254,7 +254,7 @@ open "$APP_DIR"
                       setStep('type');
                       playChime('click', soundEnabled);
                     }}
-                    className="px-4 py-1 bg-gradient-to-b from-blue-500 to-blue-600 text-white text-xs font-bold rounded-sm hover:from-blue-600 hover:to-blue-700 shadow-xs cursor-pointer"
+                    className="btn-macos-primary px-4 py-1 text-xs font-bold cursor-pointer"
                   >
                     Continue
                   </button>
@@ -263,7 +263,7 @@ open "$APP_DIR"
                 {step === 'type' && (
                   <button
                     onClick={startInstallation}
-                    className="px-4 py-1 bg-gradient-to-b from-blue-500 to-blue-600 text-white text-xs font-bold rounded-sm hover:from-blue-600 hover:to-blue-700 shadow-xs cursor-pointer"
+                    className="btn-macos-primary px-4 py-1 text-xs font-bold cursor-pointer"
                   >
                     Install
                   </button>
@@ -272,7 +272,7 @@ open "$APP_DIR"
                 {step === 'summary' && (
                   <button
                     onClick={onClose}
-                    className="px-4 py-1 bg-gradient-to-b from-blue-500 to-blue-600 text-white text-xs font-bold rounded-sm hover:from-blue-600 hover:to-blue-700 shadow-xs cursor-pointer"
+                    className="btn-macos-primary px-4 py-1 text-xs font-bold cursor-pointer"
                   >
                     Close
                   </button>

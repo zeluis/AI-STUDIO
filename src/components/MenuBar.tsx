@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Apple, Wifi, Volume2, VolumeX, Sparkles, Cpu, HardDrive } from 'lucide-react';
-import { SystemTelemetry, SystemPreferences, ModelOption } from '../types';
+import { MaterialIcon } from './MaterialIcon';
+import { SystemTelemetry, SystemPreferences, ModelOption, ThemeName, WallpaperName } from '../types';
+import { WALLPAPER_LIST, getDynamicWallpaperForHour } from '../data/wallpapers';
 import { playChime } from '../lib/sound';
 
 interface MenuBarProps {
   telemetry: SystemTelemetry;
   preferences: SystemPreferences;
+  onUpdatePreferences: (updated: Partial<SystemPreferences>) => void;
   selectedModel: ModelOption;
   models: ModelOption[];
   onSelectModel: (model: ModelOption) => void;
@@ -16,11 +18,12 @@ interface MenuBarProps {
   onOpenPersonaStudio: () => void;
   onNewSession: () => void;
   onClearSession: () => void;
-  onExportSession: () => void;
+  onExportSession: (format: 'json' | 'txt') => void;
   onImportSession: () => void;
   onToggleInspector: () => void;
   onToggleTerminal: () => void;
   onToggleSound: () => void;
+  onToggleSpeech: () => void;
   onTriggerSiri: () => void;
   onOpenInstaller: () => void;
 }
@@ -28,6 +31,7 @@ interface MenuBarProps {
 export const MenuBar: React.FC<MenuBarProps> = ({
   telemetry,
   preferences,
+  onUpdatePreferences,
   selectedModel,
   models,
   onSelectModel,
@@ -43,15 +47,18 @@ export const MenuBar: React.FC<MenuBarProps> = ({
   onToggleInspector,
   onToggleTerminal,
   onToggleSound,
+  onToggleSpeech,
   onTriggerSiri,
   onOpenInstaller,
 }) => {
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [timeString, setTimeString] = useState<string>('');
+  const [currentHour, setCurrentHour] = useState<number>(new Date().getHours());
 
   useEffect(() => {
     const updateTime = () => {
       const now = new Date();
+      setCurrentHour(now.getHours());
       const timeStr = now.toLocaleTimeString('en-US', {
         weekday: 'short',
         month: 'short',
@@ -79,7 +86,15 @@ export const MenuBar: React.FC<MenuBarProps> = ({
     setActiveDropdown(activeDropdown === menuName ? null : menuName);
   };
 
+  const handleSelectWallpaper = (wId: WallpaperName) => {
+    onUpdatePreferences({ wallpaper: wId });
+    playChime('click', preferences.soundEffects);
+    setActiveDropdown(null);
+  };
+
   const isDarkTheme = preferences.theme === 'dark';
+  const activeWallpaperItem = WALLPAPER_LIST.find((w) => w.id === preferences.wallpaper) || WALLPAPER_LIST[0];
+  const dynamicInfo = getDynamicWallpaperForHour(currentHour);
 
   return (
     <header
@@ -87,32 +102,32 @@ export const MenuBar: React.FC<MenuBarProps> = ({
       className={`relative z-50 select-none flex items-center justify-between px-2 h-6 text-xs font-medium border-b shadow-xs transition-colors duration-200 ${
         isDarkTheme
           ? 'bg-neutral-900/90 text-neutral-200 border-neutral-800 backdrop-blur-md'
-          : 'bg-linear-to-b from-gray-100 to-gray-200/95 text-gray-900 border-gray-300/80 backdrop-blur-md'
+          : 'bg-gradient-to-b from-gray-100 to-gray-200/95 text-gray-900 border-gray-300/80 backdrop-blur-md'
       }`}
     >
       {/* Left Menu Items */}
       <nav id="mac-menu-nav" className="flex items-center space-x-1">
-        {/* Apple Icon */}
+        {/* Apple Menu */}
         <div className="relative">
           <button
             id="apple-menu-btn"
             onClick={(e) => toggleDropdown(e, 'apple')}
-            className={`px-2 py-0.5 rounded-sm flex items-center cursor-default ${
+            className={`px-2 py-0.5 rounded-sm flex items-center cursor-pointer ${
               activeDropdown === 'apple' ? 'bg-blue-600 text-white' : 'hover:bg-black/10 dark:hover:bg-white/10'
             }`}
             title="Apple Menu"
           >
-            <Apple className="w-3.5 h-3.5 fill-current" />
+            <span className="text-sm leading-none font-sans"></span>
           </button>
 
           {activeDropdown === 'apple' && (
-            <div className="absolute left-0 top-full mt-0.5 w-60 bg-white/95 dark:bg-neutral-800/95 text-gray-800 dark:text-gray-100 rounded-b-md shadow-2xl border border-gray-300 dark:border-neutral-700 py-1 backdrop-blur-xl z-50 text-xs">
+            <div className="absolute left-0 top-full mt-0.5 w-64 bg-white/95 dark:bg-neutral-800/95 text-gray-800 dark:text-gray-100 rounded-b-md shadow-2xl border border-gray-300 dark:border-neutral-700 py-1 backdrop-blur-xl z-50 text-xs animate-fade-in">
               <button
                 onClick={() => {
                   onOpenAboutMac();
                   setActiveDropdown(null);
                 }}
-                className="w-full text-left px-4 py-1.5 hover:bg-blue-600 hover:text-white flex items-center justify-between"
+                className="w-full text-left px-4 py-1.5 hover:bg-blue-600 hover:text-white flex items-center justify-between cursor-pointer"
               >
                 <span>About HighSierra AI Studio...</span>
                 <span className="text-[10px] opacity-60">10.13.6</span>
@@ -122,10 +137,10 @@ export const MenuBar: React.FC<MenuBarProps> = ({
                   onOpenInstaller();
                   setActiveDropdown(null);
                 }}
-                className="w-full text-left px-4 py-1.5 hover:bg-blue-600 hover:text-white flex items-center justify-between text-blue-600 dark:text-blue-400 font-semibold"
+                className="w-full text-left px-4 py-1.5 hover:bg-blue-600 hover:text-white flex items-center justify-between text-blue-600 dark:text-blue-400 font-semibold cursor-pointer"
               >
                 <span>Install as Native App...</span>
-                <span className="text-[10px] bg-blue-100 dark:bg-blue-900 px-1 rounded-sm">.pkg</span>
+                <span className="text-[10px] bg-blue-100 dark:bg-blue-900 px-1 rounded-sm">.command</span>
               </button>
               <div className="my-1 border-t border-gray-200 dark:border-neutral-700" />
               <button
@@ -133,61 +148,68 @@ export const MenuBar: React.FC<MenuBarProps> = ({
                   onOpenSysPrefs();
                   setActiveDropdown(null);
                 }}
-                className="w-full text-left px-4 py-1.5 hover:bg-blue-600 hover:text-white"
+                className="w-full text-left px-4 py-1.5 hover:bg-blue-600 hover:text-white flex items-center justify-between cursor-pointer"
               >
-                System Preferences...
+                <span>System Preferences...</span>
+                <span className="text-[10px] font-mono">⌘,</span>
               </button>
               <button
                 onClick={() => {
                   onOpenActivityMonitor();
                   setActiveDropdown(null);
                 }}
-                className="w-full text-left px-4 py-1.5 hover:bg-blue-600 hover:text-white flex items-center justify-between"
+                className="w-full text-left px-4 py-1.5 hover:bg-blue-600 hover:text-white flex items-center justify-between cursor-pointer"
               >
-                <span>Activity Monitor</span>
-                <span className="text-[10px] font-mono opacity-60">Metal 2</span>
+                <span>Activity Monitor...</span>
+                <span className="text-[10px] font-mono">⌘⌥M</span>
+              </button>
+              <div className="my-1 border-t border-gray-200 dark:border-neutral-700" />
+              <div className="px-4 py-1 text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                Quick Wallpapers
+              </div>
+              <button
+                onClick={() => handleSelectWallpaper('highsierra')}
+                className="w-full text-left px-4 py-1 hover:bg-blue-600 hover:text-white flex items-center justify-between text-[11px] cursor-pointer"
+              >
+                <span>macOS High Sierra Lake</span>
+                {preferences.wallpaper === 'highsierra' && <MaterialIcon name="check" size={12} />}
               </button>
               <button
-                onClick={() => {
-                  onOpenLocalHub();
-                  setActiveDropdown(null);
-                }}
-                className="w-full text-left px-4 py-1.5 hover:bg-blue-600 hover:text-white flex items-center justify-between"
+                onClick={() => handleSelectWallpaper('sunset')}
+                className="w-full text-left px-4 py-1 hover:bg-blue-600 hover:text-white flex items-center justify-between text-[11px] cursor-pointer"
               >
-                <span>Local Model Hub (Ollama / LM Studio)</span>
-                <span className="text-[10px] bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 px-1 rounded-sm">Hub</span>
+                <span>High Sierra Sunset Glow</span>
+                {preferences.wallpaper === 'sunset' && <MaterialIcon name="check" size={12} />}
               </button>
               <button
-                onClick={() => {
-                  onOpenPersonaStudio();
-                  setActiveDropdown(null);
-                }}
-                className="w-full text-left px-4 py-1.5 hover:bg-blue-600 hover:text-white"
+                onClick={() => handleSelectWallpaper('dynamic')}
+                className="w-full text-left px-4 py-1 hover:bg-blue-600 hover:text-white flex items-center justify-between text-[11px] cursor-pointer font-semibold text-blue-600 dark:text-blue-400"
               >
-                System Persona Studio...
+                <span>Dynamic Time-of-Day Mode</span>
+                {preferences.wallpaper === 'dynamic' && <MaterialIcon name="check" size={12} />}
               </button>
               <div className="my-1 border-t border-gray-200 dark:border-neutral-700" />
               <button
                 onClick={() => {
-                  onClearSession();
+                  window.location.reload();
                   setActiveDropdown(null);
                 }}
-                className="w-full text-left px-4 py-1.5 hover:bg-red-600 hover:text-white text-red-600 dark:text-red-400"
+                className="w-full text-left px-4 py-1.5 hover:bg-blue-600 hover:text-white cursor-pointer"
               >
-                Clear Active Chat Session
+                Restart HighSierra Workspace...
               </button>
             </div>
           )}
         </div>
 
         {/* App Title */}
-        <span className="font-bold px-2 py-0.5">HighSierra AI</span>
+        <span className="font-bold px-1.5 text-xs text-gray-900 dark:text-white">HighSierra AI</span>
 
         {/* File Menu */}
         <div className="relative">
           <button
             onClick={(e) => toggleDropdown(e, 'file')}
-            className={`px-2 py-0.5 rounded-sm cursor-default ${
+            className={`px-2 py-0.5 rounded-sm cursor-pointer ${
               activeDropdown === 'file' ? 'bg-blue-600 text-white' : 'hover:bg-black/10 dark:hover:bg-white/10'
             }`}
           >
@@ -195,36 +217,55 @@ export const MenuBar: React.FC<MenuBarProps> = ({
           </button>
 
           {activeDropdown === 'file' && (
-            <div className="absolute left-0 top-full mt-0.5 w-56 bg-white/95 dark:bg-neutral-800/95 text-gray-800 dark:text-gray-100 rounded-b-md shadow-2xl border border-gray-300 dark:border-neutral-700 py-1 backdrop-blur-xl z-50 text-xs">
+            <div className="absolute left-0 top-full mt-0.5 w-56 bg-white/95 dark:bg-neutral-800/95 text-gray-800 dark:text-gray-100 rounded-b-md shadow-2xl border border-gray-300 dark:border-neutral-700 py-1 backdrop-blur-xl z-50 text-xs animate-fade-in">
               <button
                 onClick={() => {
                   onNewSession();
                   setActiveDropdown(null);
                 }}
-                className="w-full text-left px-4 py-1.5 hover:bg-blue-600 hover:text-white flex items-center justify-between"
+                className="w-full text-left px-4 py-1.5 hover:bg-blue-600 hover:text-white flex justify-between cursor-pointer"
               >
-                <span>New AI Chat Session</span>
-                <span className="text-[10px] opacity-60">⌘N</span>
+                <span>New Conversation</span>
+                <span className="text-[10px] font-mono opacity-60">⌘N</span>
               </button>
               <button
                 onClick={() => {
-                  onExportSession();
+                  onExportSession('json');
                   setActiveDropdown(null);
                 }}
-                className="w-full text-left px-4 py-1.5 hover:bg-blue-600 hover:text-white flex items-center justify-between"
+                className="w-full text-left px-4 py-1.5 hover:bg-blue-600 hover:text-white flex justify-between cursor-pointer"
               >
-                <span>Export Session to APFS JSON...</span>
-                <span className="text-[10px] opacity-60">⌘E</span>
+                <span>Export Session as JSON...</span>
+                <span className="text-[10px] font-mono opacity-60">⌘E</span>
+              </button>
+              <button
+                onClick={() => {
+                  onExportSession('txt');
+                  setActiveDropdown(null);
+                }}
+                className="w-full text-left px-4 py-1.5 hover:bg-blue-600 hover:text-white flex justify-between cursor-pointer"
+              >
+                <span>Export Session as TXT...</span>
               </button>
               <button
                 onClick={() => {
                   onImportSession();
                   setActiveDropdown(null);
                 }}
-                className="w-full text-left px-4 py-1.5 hover:bg-blue-600 hover:text-white flex items-center justify-between"
+                className="w-full text-left px-4 py-1.5 hover:bg-blue-600 hover:text-white flex justify-between cursor-pointer"
               >
-                <span>Import Chat JSON...</span>
-                <span className="text-[10px] opacity-60">⌘I</span>
+                <span>Import Session File...</span>
+                <span className="text-[10px] font-mono opacity-60">⌘O</span>
+              </button>
+              <div className="my-1 border-t border-gray-200 dark:border-neutral-700" />
+              <button
+                onClick={() => {
+                  onClearSession();
+                  setActiveDropdown(null);
+                }}
+                className="w-full text-left px-4 py-1.5 hover:bg-blue-600 hover:text-white text-red-600 dark:text-red-400 cursor-pointer"
+              >
+                Clear Conversation History
               </button>
             </div>
           )}
@@ -233,18 +274,18 @@ export const MenuBar: React.FC<MenuBarProps> = ({
         {/* Model Menu */}
         <div className="relative">
           <button
-            onClick={(e) => toggleDropdown(e, 'models')}
-            className={`px-2 py-0.5 rounded-sm cursor-default ${
-              activeDropdown === 'models' ? 'bg-blue-600 text-white' : 'hover:bg-black/10 dark:hover:bg-white/10'
+            onClick={(e) => toggleDropdown(e, 'model')}
+            className={`px-2 py-0.5 rounded-sm cursor-pointer ${
+              activeDropdown === 'model' ? 'bg-blue-600 text-white' : 'hover:bg-black/10 dark:hover:bg-white/10'
             }`}
           >
             Model
           </button>
 
-          {activeDropdown === 'models' && (
-            <div className="absolute left-0 top-full mt-0.5 w-64 bg-white/95 dark:bg-neutral-800/95 text-gray-800 dark:text-gray-100 rounded-b-md shadow-2xl border border-gray-300 dark:border-neutral-700 py-1 backdrop-blur-xl z-50 text-xs">
-              <div className="px-3 py-1 text-[10px] font-bold tracking-wider uppercase text-gray-400">
-                Cloud Models (Gemini Engine)
+          {activeDropdown === 'model' && (
+            <div className="absolute left-0 top-full mt-0.5 w-72 bg-white/95 dark:bg-neutral-800/95 text-gray-800 dark:text-gray-100 rounded-b-md shadow-2xl border border-gray-300 dark:border-neutral-700 py-1 backdrop-blur-xl z-50 text-xs animate-fade-in">
+              <div className="px-4 py-1 text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                Cloud Google Gemini
               </div>
               {models
                 .filter((m) => !m.isLocal)
@@ -255,19 +296,18 @@ export const MenuBar: React.FC<MenuBarProps> = ({
                       onSelectModel(m);
                       setActiveDropdown(null);
                     }}
-                    className={`w-full text-left px-4 py-1.5 hover:bg-blue-600 hover:text-white flex items-center justify-between ${
-                      selectedModel.id === m.id ? 'font-bold bg-blue-50 dark:bg-neutral-700/60' : ''
+                    className={`w-full text-left px-4 py-1.5 hover:bg-blue-600 hover:text-white flex items-center justify-between cursor-pointer ${
+                      selectedModel.id === m.id ? 'font-bold text-blue-600 dark:text-blue-400' : ''
                     }`}
                   >
                     <span>{m.name}</span>
-                    {selectedModel.id === m.id && <span className="text-blue-600 dark:text-blue-400">✓</span>}
+                    {selectedModel.id === m.id && <MaterialIcon name="check" size={14} />}
                   </button>
                 ))}
 
               <div className="my-1 border-t border-gray-200 dark:border-neutral-700" />
-              <div className="px-3 py-1 text-[10px] font-bold tracking-wider uppercase text-gray-400 flex justify-between items-center">
-                <span>Local Models (Ollama / LM Studio)</span>
-                <span className="text-[9px] text-green-600 dark:text-green-400">Metal 2</span>
+              <div className="px-4 py-1 text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                Local GGUF & Metal 2
               </div>
               {models
                 .filter((m) => m.isLocal)
@@ -278,14 +318,126 @@ export const MenuBar: React.FC<MenuBarProps> = ({
                       onSelectModel(m);
                       setActiveDropdown(null);
                     }}
-                    className={`w-full text-left px-4 py-1.5 hover:bg-blue-600 hover:text-white flex items-center justify-between ${
-                      selectedModel.id === m.id ? 'font-bold bg-blue-50 dark:bg-neutral-700/60' : ''
+                    className={`w-full text-left px-4 py-1.5 hover:bg-blue-600 hover:text-white flex items-center justify-between cursor-pointer ${
+                      selectedModel.id === m.id ? 'font-bold text-emerald-600 dark:text-emerald-400' : ''
                     }`}
                   >
-                    <span className="truncate pr-2">{m.name}</span>
-                    {selectedModel.id === m.id && <span className="text-blue-600 dark:text-blue-400">✓</span>}
+                    <span>{m.name}</span>
+                    {selectedModel.id === m.id && <MaterialIcon name="check" size={14} />}
                   </button>
                 ))}
+
+              <div className="my-1 border-t border-gray-200 dark:border-neutral-700" />
+              <button
+                onClick={() => {
+                  onOpenLocalHub();
+                  setActiveDropdown(null);
+                }}
+                className="w-full text-left px-4 py-1.5 hover:bg-blue-600 hover:text-white flex items-center space-x-1 font-semibold cursor-pointer"
+              >
+                <MaterialIcon name="dns" size={14} className="text-emerald-500 mr-1" />
+                <span>Configure Local Hub...</span>
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Wallpaper Menu (Dedicated Top Menu Bar Switcher) */}
+        <div className="relative">
+          <button
+            onClick={(e) => toggleDropdown(e, 'wallpaper')}
+            className={`px-2 py-0.5 rounded-sm cursor-pointer flex items-center space-x-1 ${
+              activeDropdown === 'wallpaper' ? 'bg-blue-600 text-white' : 'hover:bg-black/10 dark:hover:bg-white/10'
+            }`}
+          >
+            <span>Wallpaper</span>
+          </button>
+
+          {activeDropdown === 'wallpaper' && (
+            <div className="absolute left-0 top-full mt-0.5 w-80 bg-white/95 dark:bg-neutral-850/95 text-gray-800 dark:text-gray-100 rounded-b-md shadow-2xl border border-gray-300 dark:border-neutral-700 py-1.5 backdrop-blur-xl z-50 text-xs animate-fade-in">
+              <div className="px-3 py-1 flex items-center justify-between border-b border-gray-200 dark:border-neutral-700 mb-1">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                  macOS High Sierra Desktop Pictures
+                </span>
+                <button
+                  onClick={() => {
+                    onOpenSysPrefs();
+                    setActiveDropdown(null);
+                  }}
+                  className="text-[10px] text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
+                >
+                  Preferences...
+                </button>
+              </div>
+
+              {/* Nature & Landscapes */}
+              <div className="px-3 py-1 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                California Landscapes & Nature
+              </div>
+              {WALLPAPER_LIST.filter((w) => w.category === 'nature').map((w) => (
+                <button
+                  key={w.id}
+                  onClick={() => handleSelectWallpaper(w.id)}
+                  className={`w-full text-left px-3 py-1.5 hover:bg-blue-600 hover:text-white flex items-center justify-between cursor-pointer ${
+                    preferences.wallpaper === w.id ? 'font-bold text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/30' : ''
+                  }`}
+                >
+                  <div className="flex items-center space-x-2 truncate pr-2">
+                    {w.imageSrc ? (
+                      <img src={w.imageSrc} alt="" className="w-6 h-4 rounded-xs object-cover border border-black/20 shrink-0" referrerPolicy="no-referrer" />
+                    ) : (
+                      <span className="w-6 h-4 rounded-xs border shrink-0" style={{ background: w.gradientFallback }} />
+                    )}
+                    <span className="truncate">{w.name}</span>
+                  </div>
+                  {preferences.wallpaper === w.id && <MaterialIcon name="check" size={14} className="shrink-0" />}
+                </button>
+              ))}
+
+              {/* Dynamic Time-of-Day */}
+              <div className="my-1 border-t border-gray-200 dark:border-neutral-700" />
+              <div className="px-3 py-1 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                Dynamic 24-Hour Shifts
+              </div>
+              {WALLPAPER_LIST.filter((w) => w.category === 'dynamic').map((w) => (
+                <button
+                  key={w.id}
+                  onClick={() => handleSelectWallpaper(w.id)}
+                  className={`w-full text-left px-3 py-1.5 hover:bg-blue-600 hover:text-white flex items-center justify-between cursor-pointer ${
+                    preferences.wallpaper === w.id ? 'font-bold text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/30' : ''
+                  }`}
+                >
+                  <div className="flex items-center space-x-2 truncate pr-2">
+                    <img src={dynamicInfo.imageSrc} alt="" className="w-6 h-4 rounded-xs object-cover border border-black/20 shrink-0" referrerPolicy="no-referrer" />
+                    <div className="truncate">
+                      <div className="truncate">{w.name}</div>
+                      <div className="text-[9px] text-gray-400 truncate">Current: {dynamicInfo.periodName}</div>
+                    </div>
+                  </div>
+                  {preferences.wallpaper === w.id && <MaterialIcon name="check" size={14} className="shrink-0" />}
+                </button>
+              ))}
+
+              {/* Classic Apple Textures */}
+              <div className="my-1 border-t border-gray-200 dark:border-neutral-700" />
+              <div className="px-3 py-1 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                Classic Apple Textures
+              </div>
+              {WALLPAPER_LIST.filter((w) => w.category === 'texture').map((w) => (
+                <button
+                  key={w.id}
+                  onClick={() => handleSelectWallpaper(w.id)}
+                  className={`w-full text-left px-3 py-1.5 hover:bg-blue-600 hover:text-white flex items-center justify-between cursor-pointer ${
+                    preferences.wallpaper === w.id ? 'font-bold text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/30' : ''
+                  }`}
+                >
+                  <div className="flex items-center space-x-2 truncate pr-2">
+                    <span className="w-6 h-4 rounded-xs border shrink-0" style={{ background: w.gradientFallback }} />
+                    <span className="truncate">{w.name}</span>
+                  </div>
+                  {preferences.wallpaper === w.id && <MaterialIcon name="check" size={14} className="shrink-0" />}
+                </button>
+              ))}
             </div>
           )}
         </div>
@@ -294,7 +446,7 @@ export const MenuBar: React.FC<MenuBarProps> = ({
         <div className="relative">
           <button
             onClick={(e) => toggleDropdown(e, 'view')}
-            className={`px-2 py-0.5 rounded-sm cursor-default ${
+            className={`px-2 py-0.5 rounded-sm cursor-pointer ${
               activeDropdown === 'view' ? 'bg-blue-600 text-white' : 'hover:bg-black/10 dark:hover:bg-white/10'
             }`}
           >
@@ -302,93 +454,257 @@ export const MenuBar: React.FC<MenuBarProps> = ({
           </button>
 
           {activeDropdown === 'view' && (
-            <div className="absolute left-0 top-full mt-0.5 w-56 bg-white/95 dark:bg-neutral-800/95 text-gray-800 dark:text-gray-100 rounded-b-md shadow-2xl border border-gray-300 dark:border-neutral-700 py-1 backdrop-blur-xl z-50 text-xs">
+            <div className="absolute left-0 top-full mt-0.5 w-64 bg-white/95 dark:bg-neutral-800/95 text-gray-800 dark:text-gray-100 rounded-b-md shadow-2xl border border-gray-300 dark:border-neutral-700 py-1 backdrop-blur-xl z-50 text-xs animate-fade-in">
+              <div className="px-4 py-1 text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                Desktop Appearance Theme
+              </div>
+              <button
+                onClick={() => {
+                  onUpdatePreferences({ theme: 'native' });
+                  setActiveDropdown(null);
+                }}
+                className={`w-full text-left px-4 py-1.5 hover:bg-blue-600 hover:text-white flex items-center justify-between cursor-pointer ${
+                  preferences.theme === 'native' ? 'font-bold text-blue-600' : ''
+                }`}
+              >
+                <span>macOS 10.13 Native High Sierra</span>
+                {preferences.theme === 'native' && <MaterialIcon name="check" size={14} />}
+              </button>
+              <button
+                onClick={() => {
+                  onUpdatePreferences({ theme: 'aqua' });
+                  setActiveDropdown(null);
+                }}
+                className={`w-full text-left px-4 py-1.5 hover:bg-blue-600 hover:text-white flex items-center justify-between cursor-pointer ${
+                  preferences.theme === 'aqua' ? 'font-bold text-blue-600' : ''
+                }`}
+              >
+                <span>Aqua Silver Glass</span>
+                {preferences.theme === 'aqua' && <MaterialIcon name="check" size={14} />}
+              </button>
+              <button
+                onClick={() => {
+                  onUpdatePreferences({ theme: 'brushed' });
+                  setActiveDropdown(null);
+                }}
+                className={`w-full text-left px-4 py-1.5 hover:bg-blue-600 hover:text-white flex items-center justify-between cursor-pointer ${
+                  preferences.theme === 'brushed' ? 'font-bold text-blue-600' : ''
+                }`}
+              >
+                <span>Brushed Aluminum</span>
+                {preferences.theme === 'brushed' && <MaterialIcon name="check" size={14} />}
+              </button>
+              <button
+                onClick={() => {
+                  onUpdatePreferences({ theme: 'dark' });
+                  setActiveDropdown(null);
+                }}
+                className={`w-full text-left px-4 py-1.5 hover:bg-blue-600 hover:text-white flex items-center justify-between cursor-pointer ${
+                  preferences.theme === 'dark' ? 'font-bold text-blue-600' : ''
+                }`}
+              >
+                <span>Dark Sierra Style</span>
+                {preferences.theme === 'dark' && <MaterialIcon name="check" size={14} />}
+              </button>
+
+              <div className="my-1 border-t border-gray-200 dark:border-neutral-700" />
+              <div className="px-4 py-1 text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                Desktop Background
+              </div>
+              <button
+                onClick={() => handleSelectWallpaper('highsierra')}
+                className="w-full text-left px-4 py-1 hover:bg-blue-600 hover:text-white flex items-center justify-between cursor-pointer"
+              >
+                <span>High Sierra Hero Lake</span>
+                {preferences.wallpaper === 'highsierra' && <MaterialIcon name="check" size={12} />}
+              </button>
+              <button
+                onClick={() => handleSelectWallpaper('sunset')}
+                className="w-full text-left px-4 py-1 hover:bg-blue-600 hover:text-white flex items-center justify-between cursor-pointer"
+              >
+                <span>Sunset & Alpine Glow</span>
+                {preferences.wallpaper === 'sunset' && <MaterialIcon name="check" size={12} />}
+              </button>
+              <button
+                onClick={() => handleSelectWallpaper('granite')}
+                className="w-full text-left px-4 py-1 hover:bg-blue-600 hover:text-white flex items-center justify-between cursor-pointer"
+              >
+                <span>Yosemite El Capitan</span>
+                {preferences.wallpaper === 'granite' && <MaterialIcon name="check" size={12} />}
+              </button>
+              <button
+                onClick={() => handleSelectWallpaper('dynamic')}
+                className="w-full text-left px-4 py-1 hover:bg-blue-600 hover:text-white flex items-center justify-between font-semibold text-blue-600 dark:text-blue-400 cursor-pointer"
+              >
+                <span>Dynamic Auto-Shift (24h)</span>
+                {preferences.wallpaper === 'dynamic' && <MaterialIcon name="check" size={12} />}
+              </button>
+
+              <div className="my-1 border-t border-gray-200 dark:border-neutral-700" />
               <button
                 onClick={() => {
                   onToggleInspector();
                   setActiveDropdown(null);
                 }}
-                className="w-full text-left px-4 py-1.5 hover:bg-blue-600 hover:text-white"
+                className="w-full text-left px-4 py-1.5 hover:bg-blue-600 hover:text-white flex justify-between cursor-pointer"
               >
-                Toggle Model Parameters Inspector
+                <span>Toggle Model Inspector</span>
+                <span className="text-[10px] font-mono opacity-60">⌘I</span>
               </button>
               <button
                 onClick={() => {
                   onToggleTerminal();
                   setActiveDropdown(null);
                 }}
-                className="w-full text-left px-4 py-1.5 hover:bg-blue-600 hover:text-white"
+                className="w-full text-left px-4 py-1.5 hover:bg-blue-600 hover:text-white flex justify-between cursor-pointer"
               >
-                Toggle HighSierra Terminal Shell
+                <span>Toggle HighSierra Shell</span>
+                <span className="text-[10px] font-mono opacity-60">⌘T</span>
               </button>
-              <div className="my-1 border-t border-gray-200 dark:border-neutral-700" />
+            </div>
+          )}
+        </div>
+
+        {/* Personas Menu */}
+        <div className="relative">
+          <button
+            onClick={(e) => toggleDropdown(e, 'personas')}
+            className={`px-2 py-0.5 rounded-sm cursor-pointer ${
+              activeDropdown === 'personas' ? 'bg-blue-600 text-white' : 'hover:bg-black/10 dark:hover:bg-white/10'
+            }`}
+          >
+            Persona
+          </button>
+
+          {activeDropdown === 'personas' && (
+            <div className="absolute left-0 top-full mt-0.5 w-56 bg-white/95 dark:bg-neutral-800/95 text-gray-800 dark:text-gray-100 rounded-b-md shadow-2xl border border-gray-300 dark:border-neutral-700 py-1 backdrop-blur-xl z-50 text-xs animate-fade-in">
               <button
                 onClick={() => {
-                  onOpenSysPrefs();
+                  onOpenPersonaStudio();
                   setActiveDropdown(null);
                 }}
-                className="w-full text-left px-4 py-1.5 hover:bg-blue-600 hover:text-white"
+                className="w-full text-left px-4 py-1.5 hover:bg-blue-600 hover:text-white flex items-center space-x-1 font-semibold cursor-pointer"
               >
-                Change Wallpaper & Aqua Theme...
+                <MaterialIcon name="psychology" size={14} className="text-purple-500 mr-1" />
+                <span>Open Persona Studio...</span>
               </button>
             </div>
           )}
         </div>
       </nav>
 
-      {/* Right Menu Status Items */}
-      <div id="mac-menu-status" className="flex items-center space-x-2 text-[11px] font-mono">
-        {/* VRAM Indicator */}
-        <button
+      {/* Right Telemetry, Quick Wallpaper Switcher & Status Gauges */}
+      <div className="flex items-center space-x-2 text-[11px] font-mono">
+        {/* Quick Wallpaper Switcher Button (Toolbar 1-click toggle) */}
+        <div className="relative">
+          <button
+            onClick={(e) => toggleDropdown(e, 'quick_wallpaper')}
+            className="flex items-center space-x-1 px-1.5 py-0.5 rounded-xs bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 hover:bg-black/10 dark:hover:bg-white/10 cursor-pointer font-sans"
+            title={`Active Wallpaper: ${activeWallpaperItem.name} (Click to switch)`}
+          >
+            <MaterialIcon name="wallpaper" size={12} className="text-sky-500" />
+            <span className="hidden lg:inline text-[10px] font-medium truncate max-w-[110px]">
+              {preferences.wallpaper === 'dynamic' ? `Dynamic: ${dynamicInfo.periodName.split(' ')[0]}` : activeWallpaperItem.tag || 'Wallpaper'}
+            </span>
+          </button>
+
+          {activeDropdown === 'quick_wallpaper' && (
+            <div className="absolute right-0 top-full mt-1 w-72 bg-white/95 dark:bg-neutral-850/95 text-gray-800 dark:text-gray-100 rounded-lg shadow-2xl border border-gray-300 dark:border-neutral-700 p-2 backdrop-blur-xl z-50 text-xs animate-fade-in">
+              <div className="flex justify-between items-center pb-1.5 border-b border-gray-200 dark:border-neutral-700 mb-1.5">
+                <span className="font-bold text-[11px]">Desktop Pictures</span>
+                <button onClick={onOpenSysPrefs} className="text-[10px] text-blue-600 hover:underline cursor-pointer">
+                  All Wallpapers...
+                </button>
+              </div>
+              <div className="grid grid-cols-2 gap-1.5">
+                {WALLPAPER_LIST.slice(0, 6).map((w) => {
+                  const isCurrent = preferences.wallpaper === w.id;
+                  return (
+                    <button
+                      key={w.id}
+                      onClick={() => handleSelectWallpaper(w.id)}
+                      className={`p-1 rounded-md border text-left flex flex-col items-start cursor-pointer transition-all ${
+                        isCurrent
+                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/40 font-bold text-blue-600'
+                          : 'border-gray-200 dark:border-neutral-700 hover:border-blue-400'
+                      }`}
+                    >
+                      <div className="w-full h-10 rounded-xs overflow-hidden mb-1 relative border border-black/10">
+                        {w.imageSrc ? (
+                          <img src={w.imageSrc} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                        ) : (
+                          <div className="w-full h-full" style={{ background: w.gradientFallback }} />
+                        )}
+                        {isCurrent && (
+                          <div className="absolute top-0.5 right-0.5 w-3.5 h-3.5 bg-blue-600 text-white rounded-full flex items-center justify-center">
+                            <MaterialIcon name="check" size={10} />
+                          </div>
+                        )}
+                      </div>
+                      <span className="text-[10px] truncate w-full">{w.name}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* VRAM Live Usage Gauge */}
+        <div
+          className="hidden sm:flex items-center space-x-1 px-1.5 py-0.5 rounded-xs bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 cursor-pointer"
           onClick={onOpenActivityMonitor}
-          className="hidden sm:flex items-center space-x-1 px-1.5 py-0.5 rounded-sm hover:bg-black/10 dark:hover:bg-white/10 cursor-pointer"
-          title="Metal 2 VRAM Allocation"
+          title="Hardware VRAM Allocation (Metal 2 GPU)"
         >
-          <HardDrive className="w-3 h-3 text-blue-500" />
-          <span>{telemetry.vramUsedGB.toFixed(1)}GB</span>
+          <MaterialIcon name="memory" size={12} className="text-blue-500" />
+          <span>{telemetry.vramUsedGB}GB VRAM</span>
+        </div>
+
+        {/* Token Processing Speed */}
+        <div
+          className="hidden md:flex items-center space-x-1 px-1.5 py-0.5 rounded-xs bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-emerald-600 dark:text-emerald-400 font-bold"
+          title="Active Token Inference Speed"
+        >
+          <MaterialIcon name="speed" size={12} />
+          <span>{telemetry.tokensPerSec} tok/s</span>
+        </div>
+
+        {/* Global Speech Synthesis Voice Switch */}
+        <button
+          onClick={onToggleSpeech}
+          className={`p-1 rounded-sm transition-colors cursor-pointer ${
+            preferences.speechEnabled ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400'
+          }`}
+          title={preferences.speechEnabled ? 'Speech Voice Synthesis is ON (Click to Mute)' : 'Speech Voice Synthesis is OFF'}
+        >
+          <MaterialIcon name={preferences.speechEnabled ? 'record_voice_over' : 'voice_over_off'} size={14} />
         </button>
 
-        {/* CPU Load Indicator */}
+        {/* Chime Sound FX Toggle */}
         <button
-          onClick={onOpenActivityMonitor}
-          className="hidden md:flex items-center space-x-1 px-1.5 py-0.5 rounded-sm hover:bg-black/10 dark:hover:bg-white/10 cursor-pointer"
-          title="CPU Usage %"
+          onClick={onToggleSound}
+          className="p-1 rounded-sm hover:bg-black/10 dark:hover:bg-white/10 text-gray-600 dark:text-gray-300 cursor-pointer"
+          title={preferences.soundEffects ? 'Sound FX Enabled (Click to Mute)' : 'Sound FX Muted'}
         >
-          <Cpu className="w-3 h-3 text-emerald-500" />
-          <span>{telemetry.cpuUsagePercent}%</span>
+          <MaterialIcon name={preferences.soundEffects ? 'volume_up' : 'volume_off'} size={14} />
         </button>
 
         {/* Wi-Fi Icon */}
-        <Wifi className="w-3.5 h-3.5 text-gray-700 dark:text-gray-300" />
+        <span title="Wi-Fi: Connected to AI Studio Cloud Proxy">
+          <MaterialIcon name="wifi" size={14} className="text-gray-700 dark:text-gray-300" />
+        </span>
 
-        {/* Sound Toggle */}
+        {/* Siri AI Assistant Trigger */}
         <button
-          onClick={onToggleSound}
-          className="p-1 rounded-sm hover:bg-black/10 dark:hover:bg-white/10"
-          title={preferences.soundEffects ? 'Mute Chimes' : 'Enable Chimes'}
+          onClick={onTriggerSiri}
+          className="p-1 rounded-full bg-gradient-to-tr from-rose-500 via-purple-500 to-sky-400 text-white shadow-2xs hover:scale-105 transition-transform cursor-pointer"
+          title="Trigger Siri HighSierra AI Status"
         >
-          {preferences.soundEffects ? (
-            <Volume2 className="w-3.5 h-3.5 text-gray-800 dark:text-gray-200" />
-          ) : (
-            <VolumeX className="w-3.5 h-3.5 text-gray-400" />
-          )}
+          <MaterialIcon name="auto_awesome" size={12} />
         </button>
 
         {/* Clock */}
-        <span className="px-1 text-gray-800 dark:text-gray-200 font-sans font-medium">{timeString}</span>
-
-        {/* Siri Trigger Button */}
-        <button
-          id="siri-ai-trigger"
-          onClick={() => {
-            playChime('siri', preferences.soundEffects);
-            onTriggerSiri();
-          }}
-          className="flex items-center justify-center w-5 h-5 rounded-full bg-linear-to-tr from-sky-400 via-indigo-500 to-fuchsia-500 hover:scale-105 active:scale-95 transition-transform shadow-xs"
-          title="Trigger Siri AI Voice / Quick Prompt"
-        >
-          <Sparkles className="w-3 h-3 text-white animate-pulse" />
-        </button>
+        <span className="font-sans font-medium text-gray-800 dark:text-gray-200 pl-1">{timeString}</span>
       </div>
     </header>
   );

@@ -55,14 +55,30 @@ export interface Persona {
   isBuiltIn?: boolean;
 }
 
-export type ThemeName = 'aqua' | 'dark' | 'brushed';
-export type WallpaperName = 'highsierra' | 'sunset' | 'snow' | 'granite' | 'space';
+export type ThemeName = 'native' | 'aqua' | 'dark' | 'brushed';
+export type WallpaperName =
+  | 'highsierra'
+  | 'sunset'
+  | 'snow'
+  | 'granite'
+  | 'space'
+  | 'aqua'
+  | 'brushed_metal'
+  | 'nebula'
+  | 'dynamic'
+  | 'custom';
 
 export interface SystemPreferences {
   theme: ThemeName;
   wallpaper: WallpaperName;
+  wallpaperBlur: number; // 0 to 20px
+  wallpaperDim: number; // 0 to 60%
+  customWallpaperUrl?: string;
   soundEffects: boolean;
   autoTtS: boolean;
+  speechEnabled: boolean;
+  speechRate: number; // 0.8 to 1.5
+  speechPitch: number; // 0.8 to 1.2
   selectedVoice: string;
   localServerUrl: string; // e.g. http://localhost:11434
   localServerType: 'ollama' | 'lmstudio';

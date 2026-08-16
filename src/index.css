@@ -1,40 +1,78 @@
 @import "tailwindcss";
 
 @layer utilities {
-  .brushed-metal {
-    background: linear-gradient(to bottom, #E8E8E8 0%, #D1D1D1 100%);
-    border-bottom: 1px solid #999;
+  /* macOS High Sierra Native Frosted Silver Chrome */
+  .chrome-native {
+    background: linear-gradient(to bottom, #F6F6F6 0%, #E3E3E3 100%);
+    border-bottom: 1px solid #B0B0B0;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 1px 2px rgba(0, 0, 0, 0.05);
   }
-  .dark .brushed-metal {
-    background: linear-gradient(to bottom, #3A3A3C 0%, #2C2C2E 100%);
+
+  /* macOS High Sierra Classic Brushed Metal */
+  .chrome-brushed {
+    background: linear-gradient(to bottom, #E8E8E8 0%, #CECECE 50%, #BDBDBD 51%, #DCDCDC 100%);
+    border-bottom: 1px solid #8E8E8E;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 2px 4px rgba(0, 0, 0, 0.12);
+  }
+
+  /* Aqua Glass Accent */
+  .chrome-aqua {
+    background: linear-gradient(to bottom, #E6EFF9 0%, #CCE0F5 50%, #B8D4F0 51%, #D5E5F7 100%);
+    border-bottom: 1px solid #7FA7D1;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 1px 3px rgba(0, 50, 100, 0.15);
+  }
+
+  /* Dark Sierra Chrome */
+  .chrome-dark {
+    background: linear-gradient(to bottom, #3A3A3C 0%, #262628 100%);
     border-bottom: 1px solid #1C1C1E;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 2px 6px rgba(0, 0, 0, 0.4);
   }
   
   .sidebar-bg {
-    background-color: rgba(236, 236, 236, 0.85);
+    background-color: rgba(240, 240, 240, 0.88);
     backdrop-filter: blur(20px);
     border-right: 1px solid #B4B4B4;
   }
   .dark .sidebar-bg {
-    background-color: rgba(38, 38, 38, 0.85);
+    background-color: rgba(34, 34, 36, 0.88);
     backdrop-filter: blur(20px);
     border-right: 1px solid #444444;
   }
 
   .btn-macos {
-    background: linear-gradient(to bottom, #FFFFFF 0%, #F0F0F0 100%);
+    background: linear-gradient(to bottom, #FFFFFF 0%, #F1F1F1 100%);
     border: 1px solid #B6B6B6;
-    box-shadow: 0 1px 0 rgba(255,255,255,0.7);
+    box-shadow: 0 1px 0 rgba(255,255,255,0.8), 0 1px 1px rgba(0,0,0,0.04);
     border-radius: 4px;
   }
+  .btn-macos:hover {
+    background: linear-gradient(to bottom, #FFFFFF 0%, #E8E8E8 100%);
+  }
   .btn-macos:active {
-    background: #DCDCDC;
+    background: #D8D8D8;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.15);
   }
   .dark .btn-macos {
     background: linear-gradient(to bottom, #4A4A4C 0%, #323234 100%);
     border: 1px solid #5A5A5C;
     box-shadow: 0 1px 0 rgba(255,255,255,0.1);
     color: #F0F0F0;
+  }
+
+  .btn-macos-primary {
+    background: linear-gradient(to bottom, #4A90E2 0%, #2974D4 100%);
+    border: 1px solid #1C5BB0;
+    box-shadow: 0 1px 0 rgba(255,255,255,0.3), 0 1px 2px rgba(0,0,0,0.15);
+    color: #FFFFFF;
+    border-radius: 4px;
+  }
+  .btn-macos-primary:hover {
+    background: linear-gradient(to bottom, #5B9DF0 0%, #3580E0 100%);
+  }
+  .btn-macos-primary:active {
+    background: #1C5BB0;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.3);
   }
 
   .traffic-light-red {
@@ -57,7 +95,7 @@
 
   .input-inset {
     border: 1px solid #B4B4B4;
-    box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.08);
     background: #FFF;
   }
   .dark .input-inset {
@@ -67,3 +105,8 @@
   }
 }
 
+/* Material Symbols alignment helper */
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  vertical-align: middle;
+}

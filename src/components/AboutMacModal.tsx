@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Apple, X, HardDrive, Cpu, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { MaterialIcon } from './MaterialIcon';
 import { SystemTelemetry, SystemPreferences } from '../types';
 
 interface AboutMacModalProps {
@@ -21,11 +21,11 @@ export const AboutMacModal: React.FC<AboutMacModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 animate-fade-in">
       <div className="w-full max-w-lg bg-gray-100 dark:bg-neutral-800 text-gray-900 dark:text-neutral-100 rounded-lg shadow-2xl border border-gray-300 dark:border-neutral-700 overflow-hidden font-sans">
         {/* Header Title Bar */}
-        <div className="flex items-center justify-between px-3 py-1.5 bg-gradient-to-b from-gray-200 to-gray-300 dark:from-neutral-700 dark:to-neutral-800 border-b border-gray-300 dark:border-neutral-700">
+        <div className="flex items-center justify-between px-3 py-1.5 bg-gradient-to-b from-gray-200 to-gray-300 dark:from-neutral-700 dark:to-neutral-800 border-b border-gray-300 dark:border-neutral-700 select-none">
           <div className="flex items-center space-x-2">
             <button
               onClick={onClose}
-              className="w-3 h-3 rounded-full bg-red-500 hover:bg-red-600 border border-red-600 flex items-center justify-center text-[8px] font-bold text-red-950"
+              className="w-3 h-3 rounded-full bg-red-500 hover:bg-red-600 border border-red-600 flex items-center justify-center text-[8px] font-bold text-red-950 cursor-pointer"
             >
               ✕
             </button>
@@ -33,18 +33,18 @@ export const AboutMacModal: React.FC<AboutMacModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"
+            className="text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 cursor-pointer"
           >
-            <X className="w-4 h-4" />
+            <MaterialIcon name="close" size={16} />
           </button>
         </div>
 
         {/* High Sierra Segmented Top Tabs */}
-        <div className="flex justify-center border-b border-gray-200 dark:border-neutral-700 bg-gray-50 dark:bg-neutral-850 px-4 py-2">
+        <div className="flex justify-center border-b border-gray-200 dark:border-neutral-700 bg-gray-50 dark:bg-neutral-850 px-4 py-2 select-none">
           <div className="flex rounded-md p-0.5 bg-gray-200 dark:bg-neutral-700 text-xs font-medium">
             <button
               onClick={() => setActiveTab('overview')}
-              className={`px-3 py-1 rounded-xs transition-colors ${
+              className={`px-3 py-1 rounded-xs transition-colors cursor-pointer ${
                 activeTab === 'overview' ? 'bg-white dark:bg-neutral-600 font-bold shadow-xs' : 'text-gray-600 dark:text-gray-300'
               }`}
             >
@@ -52,7 +52,7 @@ export const AboutMacModal: React.FC<AboutMacModalProps> = ({
             </button>
             <button
               onClick={() => setActiveTab('displays')}
-              className={`px-3 py-1 rounded-xs transition-colors ${
+              className={`px-3 py-1 rounded-xs transition-colors cursor-pointer ${
                 activeTab === 'displays' ? 'bg-white dark:bg-neutral-600 font-bold shadow-xs' : 'text-gray-600 dark:text-gray-300'
               }`}
             >
@@ -60,7 +60,7 @@ export const AboutMacModal: React.FC<AboutMacModalProps> = ({
             </button>
             <button
               onClick={() => setActiveTab('storage')}
-              className={`px-3 py-1 rounded-xs transition-colors ${
+              className={`px-3 py-1 rounded-xs transition-colors cursor-pointer ${
                 activeTab === 'storage' ? 'bg-white dark:bg-neutral-600 font-bold shadow-xs' : 'text-gray-600 dark:text-gray-300'
               }`}
             >
@@ -68,7 +68,7 @@ export const AboutMacModal: React.FC<AboutMacModalProps> = ({
             </button>
             <button
               onClick={() => setActiveTab('support')}
-              className={`px-3 py-1 rounded-xs transition-colors ${
+              className={`px-3 py-1 rounded-xs transition-colors cursor-pointer ${
                 activeTab === 'support' ? 'bg-white dark:bg-neutral-600 font-bold shadow-xs' : 'text-gray-600 dark:text-gray-300'
               }`}
             >
@@ -82,8 +82,8 @@ export const AboutMacModal: React.FC<AboutMacModalProps> = ({
           {activeTab === 'overview' && (
             <div className="flex flex-col md:flex-row items-center md:items-start space-y-4 md:space-y-0 md:space-x-6">
               {/* Big Apple Logo Graphic */}
-              <div className="flex flex-col items-center justify-center p-4 bg-linear-to-b from-sky-400/20 via-blue-500/10 to-indigo-600/20 rounded-2xl border border-blue-300/40 dark:border-blue-700/40 shadow-inner">
-                <Apple className="w-20 h-20 text-gray-800 dark:text-gray-100 fill-current" />
+              <div className="flex flex-col items-center justify-center p-4 bg-gradient-to-b from-sky-400/20 via-blue-500/10 to-indigo-600/20 rounded-2xl border border-blue-300/40 dark:border-blue-700/40 shadow-inner">
+                <span className="text-6xl text-gray-800 dark:text-gray-100 select-none"></span>
                 <span className="text-[10px] font-bold tracking-widest text-blue-700 dark:text-blue-300 uppercase mt-2">
                   High Sierra
                 </span>
@@ -126,15 +126,15 @@ export const AboutMacModal: React.FC<AboutMacModalProps> = ({
                 <div className="pt-3 flex space-x-2">
                   <button
                     onClick={onOpenSysPrefs}
-                    className="px-3 py-1 bg-gradient-to-b from-gray-100 to-gray-300 dark:from-neutral-700 dark:to-neutral-800 border border-gray-400 dark:border-neutral-600 rounded-sm text-xs font-medium hover:bg-white shadow-2xs"
+                    className="btn-macos px-3 py-1 text-xs font-medium cursor-pointer"
                   >
-                    System Report...
+                    System Preferences...
                   </button>
                   <button
-                    onClick={() => alert('High Sierra 10.13.6 system is fully updated with HighSierra AI Studio v1.0!')}
-                    className="px-3 py-1 bg-gradient-to-b from-gray-100 to-gray-300 dark:from-neutral-700 dark:to-neutral-800 border border-gray-400 dark:border-neutral-600 rounded-sm text-xs font-medium hover:bg-white shadow-2xs"
+                    onClick={() => onOpenSysPrefs()}
+                    className="btn-macos px-3 py-1 text-xs font-medium cursor-pointer"
                   >
-                    Software Update...
+                    Wallpaper & Theme...
                   </button>
                 </div>
               </div>
@@ -144,7 +144,7 @@ export const AboutMacModal: React.FC<AboutMacModalProps> = ({
           {activeTab === 'displays' && (
             <div className="space-y-4 text-xs">
               <div className="flex items-center space-x-3 p-3 bg-blue-50 dark:bg-neutral-750 rounded-md border border-blue-200 dark:border-neutral-700">
-                <Cpu className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+                <MaterialIcon name="memory" size={32} className="text-blue-600 dark:text-blue-400" />
                 <div>
                   <h3 className="font-bold text-sm">Built-in Retina Display & Metal 2 Acceleration</h3>
                   <p className="text-gray-600 dark:text-gray-300">15.4-inch (2880 x 1800) High Sierra Display</p>
@@ -175,7 +175,7 @@ export const AboutMacModal: React.FC<AboutMacModalProps> = ({
           {activeTab === 'storage' && (
             <div className="space-y-4 text-xs">
               <div className="flex items-center space-x-3 p-3 bg-emerald-50 dark:bg-neutral-750 rounded-md border border-emerald-200 dark:border-neutral-700">
-                <HardDrive className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
+                <MaterialIcon name="hard_drive" size={32} className="text-emerald-600 dark:text-emerald-400" />
                 <div className="flex-1">
                   <div className="flex justify-between items-center mb-1">
                     <h3 className="font-bold text-sm">Macintosh HD (APFS Volume)</h3>
@@ -201,24 +201,24 @@ export const AboutMacModal: React.FC<AboutMacModalProps> = ({
           {activeTab === 'support' && (
             <div className="space-y-3 text-xs">
               <h3 className="font-bold text-sm flex items-center space-x-1.5">
-                <ShieldCheck className="w-4 h-4 text-blue-600" />
+                <MaterialIcon name="verified_user" size={16} className="text-blue-600" />
                 <span>HighSierra AI Studio Architecture Compatibility</span>
               </h3>
-              <ul className="space-y-1.5 font-sans text-gray-700 dark:text-gray-300">
+              <ul className="space-y-2 font-sans text-gray-700 dark:text-gray-300">
                 <li className="flex items-center space-x-2">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                  <MaterialIcon name="check_circle" size={16} className="text-emerald-500" />
                   <span>Strictly verified for Node.js 16.20.2 & npm 8.19.4 execution.</span>
                 </li>
                 <li className="flex items-center space-x-2">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                  <MaterialIcon name="check_circle" size={16} className="text-emerald-500" />
                   <span>Optimized for Google Chrome 115 and above.</span>
                 </li>
                 <li className="flex items-center space-x-2">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                  <MaterialIcon name="check_circle" size={16} className="text-emerald-500" />
                   <span>APFS local client persistence for offline chat storage.</span>
                 </li>
                 <li className="flex items-center space-x-2">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                  <MaterialIcon name="check_circle" size={16} className="text-emerald-500" />
                   <span>Direct connection to Ollama & LM Studio local inference servers.</span>
                 </li>
               </ul>
@@ -230,7 +230,7 @@ export const AboutMacModal: React.FC<AboutMacModalProps> = ({
         <div className="flex justify-end px-4 py-2 bg-gray-200 dark:bg-neutral-750 border-t border-gray-300 dark:border-neutral-700">
           <button
             onClick={onClose}
-            className="px-4 py-1 bg-gradient-to-b from-blue-500 to-blue-600 text-white rounded-sm text-xs font-semibold shadow-2xs hover:from-blue-600 hover:to-blue-700"
+            className="btn-macos-primary px-4 py-1 text-xs font-semibold cursor-pointer"
           >
             Done
           </button>

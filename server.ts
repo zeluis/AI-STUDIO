@@ -41,7 +41,7 @@ async function startServer() {
       const {
         prompt,
         messages = [],
-        model = "gemini-3.6-flash",
+        model = "gemini-3.7-flash",
         systemPrompt = "You are a macOS High Sierra AI Assistant.",
         temperature = 0.7,
         topP = 0.9,
@@ -53,18 +53,55 @@ async function startServer() {
       }
 
       const apiKey = process.env.GEMINI_API_KEY;
-      if (!apiKey) {
-        return res.status(500).json({
-          error: "GEMINI_API_KEY environment variable is missing. Please verify API key settings.",
+      if (!apiKey || apiKey === "MY_GEMINI_API_KEY") {
+        return res.status(400).json({
+          error:
+            "Gemini API key is not configured. Please add your GEMINI_API_KEY in the Settings > Secrets panel. Alternatively, you can select a local model (such as Llama 3 8B, DeepSeek R1, or Qwen 2.5) to run locally with High Sierra Metal 2 GPU acceleration.",
+          isApiKeyError: true,
         });
       }
 
       const ai = getGeminiClient();
 
-      // Format parts if image attachment exists
+      // Normalize model ID
+      let targetModel = model || "gemini-3.7-flash";
+      if (targetModel.includes("3.6")) {
+        targetModel = "gemini-3.7-flash";
+      }
+
+      // Format parts if image attachment exists or multi-turn history exists
       let contents: any;
-      if (imageAttachment && imageAttachment.dataUrl) {
-        // Extract base64 and mime type from dataUrl e.g. "data:image/png;base64,..."
+      if (messages && messages.length > 0) {
+        const historyParts = messages.map((m: any) => ({
+          role: m.role === "user" ? "user" : "model",
+          parts: [{ text: m.content || "" }],
+        }));
+
+        if (imageAttachment && imageAttachment.dataUrl) {
+          const matches = imageAttachment.dataUrl.match(/^data:(.+);base64,(.+)$/);
+          const mimeType = matches ? matches[1] : "image/jpeg";
+          const base64Data = matches ? matches[2] : imageAttachment.dataUrl;
+
+          historyParts.push({
+            role: "user",
+            parts: [
+              {
+                inlineData: {
+                  mimeType,
+                  data: base64Data,
+                },
+              },
+              { text: prompt },
+            ],
+          });
+        } else {
+          historyParts.push({
+            role: "user",
+            parts: [{ text: prompt }],
+          });
+        }
+        contents = historyParts;
+      } else if (imageAttachment && imageAttachment.dataUrl) {
         const matches = imageAttachment.dataUrl.match(/^data:(.+);base64,(.+)$/);
         const mimeType = matches ? matches[1] : "image/jpeg";
         const base64Data = matches ? matches[2] : imageAttachment.dataUrl;
@@ -80,21 +117,13 @@ async function startServer() {
             { text: prompt },
           ],
         };
-      } else if (messages && messages.length > 0) {
-        // Construct conversation contents for Gemini
-        const formattedHistory = messages.map((m: any) => {
-          const role = m.role === "user" ? "user" : "model";
-          return `${role.toUpperCase()}: ${m.content}`;
-        });
-        formattedHistory.push(`USER: ${prompt}`);
-        contents = formattedHistory.join("\n\n");
       } else {
         contents = prompt;
       }
 
       // Generate content with Gemini
       const response = await ai.models.generateContent({
-        model: model || "gemini-3.6-flash",
+        model: targetModel,
         contents,
         config: {
           systemInstruction: systemPrompt,
@@ -112,13 +141,28 @@ async function startServer() {
         text,
         tokensUsed: estimatedTokens,
         speedTokPerSec,
-        model,
+        model: targetModel,
         durationMs: Math.round(durationSec * 1000),
       });
     } catch (err: any) {
       console.error("Gemini API error:", err);
+      const errorMsg = err?.message || String(err);
+      const isKeyInvalid =
+        errorMsg.includes("API key not valid") ||
+        errorMsg.includes("API_KEY_INVALID") ||
+        errorMsg.includes("400") ||
+        errorMsg.includes("API key");
+
+      if (isKeyInvalid) {
+        return res.status(400).json({
+          error:
+            "Gemini API key is invalid or unauthorized. Please verify your GEMINI_API_KEY in the Settings > Secrets panel. You can also select local models (Llama 3, DeepSeek R1, Qwen 2.5) to run offline without an API key.",
+          isApiKeyError: true,
+        });
+      }
+
       return res.status(500).json({
-        error: err.message || "Failed to process chat request via Gemini API",
+        error: errorMsg || "Failed to process chat request via Gemini API",
       });
     }
   });

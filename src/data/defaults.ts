@@ -2,8 +2,8 @@ import { ModelOption, Persona, SystemPreferences, HardwareSettings, SystemTeleme
 
 export const DEFAULT_MODELS: ModelOption[] = [
   {
-    id: 'gemini-3.6-flash',
-    name: 'Google Gemini 3.6 Flash',
+    id: 'gemini-3.7-flash',
+    name: 'Google Gemini 3.7 Flash',
     provider: 'gemini',
     description: 'High-speed cloud AI engine for general chat, coding, and multi-modal reasoning.',
     contextLength: '1M tokens',
@@ -123,10 +123,15 @@ export const DEFAULT_PERSONAS: Persona[] = [
 ];
 
 export const DEFAULT_PREFERENCES: SystemPreferences = {
-  theme: 'aqua',
+  theme: 'native',
   wallpaper: 'highsierra',
+  wallpaperBlur: 0,
+  wallpaperDim: 0,
   soundEffects: true,
   autoTtS: false,
+  speechEnabled: true,
+  speechRate: 1.0,
+  speechPitch: 1.0,
   selectedVoice: 'Samantha',
   localServerUrl: 'http://localhost:11434',
   localServerType: 'ollama',
